@@ -181,6 +181,13 @@
     .score-box { min-width: 66px; padding: 6px 10px; }
     .score-box .value { font-size: 16px; }
   }
+  /* 矮屏/横屏：不要用垂直居中，否则顶部内容会被裁掉且滚不到 */
+  @media (max-height: 660px) {
+    body { align-items: flex-start; padding-top: 14px; padding-bottom: 14px; }
+    .app { width: min(72vh, 94vw); }
+    .head { margin-bottom: 10px; }
+    footer { margin-top: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -252,6 +259,9 @@
   var won = false;
   var over = false;
   var animating = false;
+  var pendingDir = null;   // 动画期间按下的方向，动画结束后补执行
+  var overlayKind = null;  // 'over' | 'win'
+  var winTimer = null;
 
   var geo = { gap: 10, cell: 80, pad: 10 };
 
@@ -318,6 +328,11 @@
     styleTile(el, value);
     place(el, x, y);
     tilesLayer.appendChild(el);
+    if (!isNew) {
+      // 定位完成后恢复过渡，避免这批方块此后一直“瞬移”
+      void el.offsetWidth;
+      requestAnimationFrame(function () { el.classList.remove('moving-none'); });
+    }
     return { id: ++tileSeq, value: value, x: x, y: y, el: el };
   }
 
@@ -411,7 +426,12 @@
   }
 
   function move(dir) {
-    if (over || animating) return;
+    if (over) return;
+    if (animating) {
+      // 动画未结束：不丢弃输入，记下最后一次方向，等动画结束后立刻执行
+      pendingDir = dir;
+      return;
+    }
     var snap = snapshot();
     var lines = linesFor(dir);
     var moved = false;
@@ -492,6 +512,13 @@
         });
         animating = false;
         afterMove();
+        if (pendingDir && !over) {
+          var d = pendingDir;
+          pendingDir = null;
+          move(d);
+        } else {
+          pendingDir = null;
+        }
       }, 150);
     } else {
       afterMove();
@@ -502,15 +529,21 @@
     spawn(false);
     if (!canMove()) {
       over = true;
+      pendingDir = null;
       ovTitle.textContent = '游戏结束';
       ovSub.textContent = '本局得分 ' + score + ' · 最高 ' + best;
+      if (winTimer) { clearTimeout(winTimer); winTimer = null; }
       overlay.classList.add('show');
     } else if (won && !over) {
       won = false;
       ovTitle.textContent = '达成 2048';
       ovSub.textContent = '继续挑战更大的数字';
       overlay.classList.add('show');
-      setTimeout(function () { if (!over) overlay.classList.remove('show'); }, 900);
+      if (winTimer) clearTimeout(winTimer);
+      winTimer = setTimeout(function () {
+        winTimer = null;
+        if (!over) overlay.classList.remove('show');
+      }, 900);
     }
   }
 
@@ -525,6 +558,8 @@
     won = false;
     over = false;
     animating = false;
+    pendingDir = null;
+    if (winTimer) { clearTimeout(winTimer); winTimer = null; }
     overlay.classList.remove('show');
     tilesLayer.innerHTML = '';
     measure();
@@ -538,6 +573,9 @@
     var snap = history;
     history = null;
     over = false;
+    pendingDir = null;
+    won = snap.won;
+    if (winTimer) { clearTimeout(winTimer); winTimer = null; }
     overlay.classList.remove('show');
     score = snap.score;
     scoreEl.textContent = score;
@@ -570,9 +608,13 @@
 
   var touch = null;
   board.addEventListener('pointerdown', function (e) {
-    touch = { x: e.clientX, y: e.clientY };
+    if (over) return;
+    touch = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    if (e.pointerId !== undefined && board.setPointerCapture) {
+      try { board.setPointerCapture(e.pointerId); } catch (err) {}
+    }
   });
-  board.addEventListener('pointerup', function (e) {
+  function endSwipe(e) {
     if (!touch) return;
     var dx = e.clientX - touch.x;
     var dy = e.clientY - touch.y;
@@ -580,8 +622,12 @@
     if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
     if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
     else move(dy > 0 ? 'down' : 'up');
-  });
+  }
+  // 在 window 上收尾，手指移出棋盘范围后抬起也能识别
+  board.addEventListener('pointerup', endSwipe);
+  window.addEventListener('pointerup', endSwipe);
   board.addEventListener('pointercancel', function () { touch = null; });
+  window.addEventListener('pointercancel', function () { touch = null; });
 
   document.getElementById('newGame').addEventListener('click', newGame);
   document.getElementById('undo').addEventListener('click', undo);
