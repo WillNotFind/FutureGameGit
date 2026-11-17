@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0d12">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23ff6a3d'/><text x='32' y='46' font-size='34' font-family='Helvetica,Arial,sans-serif' font-weight='bold' text-anchor='middle' fill='%230b0d12'>W</text></svg>">
+<title>404 · 页面不见了</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #14171f; --line: rgba(255,255,255,0.08);
+    --text: #e8ebf2; --muted: #8b93a7; --accent: #ff6a3d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 32px 20px;
+    background: var(--bg);
+    background-image:
+      radial-gradient(900px 560px at 12% -12%, rgba(255,106,61,0.16), transparent 60%),
+      radial-gradient(760px 500px at 92% 4%, rgba(58,120,255,0.10), transparent 65%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: min(94vw, 560px); text-align: center; }
+  .code {
+    font-size: clamp(84px, 22vw, 150px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    margin: 0 0 6px;
+    background: linear-gradient(180deg, #ff8a5c, #ff4d18);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  h1 { font-size: 20px; margin: 18px 0 10px; font-weight: 600; }
+  p.sub { color: var(--muted); font-size: 13.5px; line-height: 1.75; margin: 0 auto 26px; max-width: 380px; }
+  .url {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 12px; color: #7d879c; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; margin-bottom: 26px;
+  }
+  .acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  a.btn {
+    text-decoration: none; font-size: 13.5px; padding: 11px 20px; border-radius: 10px;
+    color: var(--text); background: var(--panel); border: 1px solid var(--line);
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  a.btn:hover { background: #1a1e28; border-color: rgba(255,106,61,0.45); }
+  a.btn.primary { color: #ffd9cd; background: rgba(255,106,61,0.13); border-color: rgba(255,106,61,0.34); }
+  .links { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--line); color: #5f677a; font-size: 12px; }
+  .links a { color: #7d879c; text-decoration: none; margin: 0 8px; }
+  .links a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="code">404</p>
+  <h1>这个页面不在这儿</h1>
+  <p class="sub">地址可能写错了，或者页面已经被挪走、改名。回到入口看看现在都有什么。</p>
+  <div class="url" id="url"></div>
+  <div class="acts">
+    <a class="btn primary" href="/arenafps/">回站点入口</a>
+    <a class="btn" href="javascript:history.back()">返回上一页</a>
+  </div>
+  <div class="links">
+    <span>直接打开：</span>
+    <a href="/arenafps/fps/">竞技场 FPS</a>
+    <a href="/arenafps/2048/">2048</a>
+    <a href="/arenafps/snake/">贪吃蛇</a>
+    <a href="/arenafps/breakout/">打砖块</a>
+    <a href="/arenafps/qrcode/">二维码</a>
+  </div>
+</div>
+<script>
+(function () {
+  var el = document.getElementById('url');
+  var path = location.pathname + location.search;
+  el.textContent = path;
+  el.title = path;
+})();
+</script>
+</body>
+</html>
