@@ -389,7 +389,7 @@ const I18N = {
   }
 };
 let LANG = 'en';
-try { LANG = localStorage.getItem('arenafps-lang') || ''; } catch (e) {}
+try { LANG = localStorage.getItem('futuregame-lang') || ''; } catch (e) {}
 if (LANG !== 'zh' && LANG !== 'en') {
   LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
 }
@@ -412,7 +412,7 @@ function applyLang() {
 }
 function toggleLang() {
   LANG = LANG === 'zh' ? 'en' : 'zh';
-  try { localStorage.setItem('arenafps-lang', LANG); } catch (e) {}
+  try { localStorage.setItem('futuregame-lang', LANG); } catch (e) {}
   applyLang();
 }
 function tName(w) { return t('w' + w.charAt(0).toUpperCase() + w.slice(1)); }
