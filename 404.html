@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23ff6a3d'/><text x='32' y='46' font-size='34' font-family='Helvetica,Arial,sans-serif' font-weight='bold' text-anchor='middle' fill='%230b0d12'>W</text></svg>">
 <title>404 · 页面不见了</title>
@@ -13,7 +13,8 @@
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 32px 20px;
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    padding: 32px max(20px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
     background: var(--bg);
     background-image:
       radial-gradient(900px 560px at 12% -12%, rgba(255,106,61,0.16), transparent 60%),
@@ -22,8 +23,17 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
       "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
   }
   .wrap { width: min(94vw, 560px); text-align: center; }
+  .lang-tab {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 40; padding: 10px 7px; background: rgba(11,13,18,0.85);
+    border: 1px solid rgba(255,255,255,0.22); border-right: none; border-radius: 8px 0 0 8px;
+    color: #ddd; font: 700 12px/1 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; letter-spacing: 1px;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+  }
+  .lang-tab:hover { color: var(--accent); border-color: var(--accent); }
   .code {
     font-size: clamp(84px, 22vw, 150px);
     font-weight: 800;
@@ -55,25 +65,70 @@
 </style>
 </head>
 <body>
+<button class="lang-tab" id="lang-tab" type="button">EN</button>
 <div class="wrap">
   <p class="code">404</p>
-  <h1>这个页面不在这儿</h1>
-  <p class="sub">地址可能写错了，或者页面已经被挪走、改名。回到入口看看现在都有什么。</p>
+  <h1 data-i18n="h1">这个页面不在这儿</h1>
+  <p class="sub" data-i18n="sub">地址可能写错了，或者页面已经被挪走、改名。回到入口看看现在都有什么。</p>
   <div class="url" id="url"></div>
   <div class="acts">
-    <a class="btn primary" href="/arenafps/">回站点入口</a>
-    <a class="btn" href="javascript:history.back()">返回上一页</a>
+    <a class="btn primary" href="/arenafps/" data-i18n="home">回站点入口</a>
+    <a class="btn" href="javascript:history.back()" data-i18n="backPage">返回上一页</a>
   </div>
   <div class="links">
-    <span>直接打开：</span>
-    <a href="/arenafps/fps/">竞技场 FPS</a>
+    <span data-i18n="direct">直接打开：</span>
+    <a href="/arenafps/fps/" data-i18n="lFps">竞技场 FPS</a>
     <a href="/arenafps/2048/">2048</a>
-    <a href="/arenafps/snake/">贪吃蛇</a>
-    <a href="/arenafps/breakout/">打砖块</a>
-    <a href="/arenafps/qrcode/">二维码</a>
+    <a href="/arenafps/snake/" data-i18n="lSnake">贪吃蛇</a>
+    <a href="/arenafps/breakout/" data-i18n="lBreakout">打砖块</a>
+    <a href="/arenafps/qrcode/" data-i18n="lQr">二维码</a>
   </div>
 </div>
 <script>
+// ---------- 自适应语言 ----------
+var SITE_I18N = {
+  zh: {
+    docTitle: '404 · 页面不见了',
+    h1: '这个页面不在这儿',
+    sub: '地址可能写错了，或者页面已经被挪走、改名。回到入口看看现在都有什么。',
+    home: '回站点入口', backPage: '返回上一页', direct: '直接打开：',
+    lFps: '竞技场 FPS', lSnake: '贪吃蛇', lBreakout: '打砖块', lQr: '二维码'
+  },
+  en: {
+    docTitle: '404 · Page not found',
+    h1: 'This page is not here',
+    sub: 'The address may be mistyped, or the page was moved or renamed. Head back to the index to see what is available.',
+    home: 'Site index', backPage: 'Go back', direct: 'Open directly:',
+    lFps: 'Arena FPS', lSnake: 'Snake', lBreakout: 'Breakout', lQr: 'QR code'
+  }
+};
+var SITE_LANG = '';
+try { SITE_LANG = localStorage.getItem('site-lang') || ''; } catch (e) {}
+if (SITE_LANG !== 'zh' && SITE_LANG !== 'en') {
+  SITE_LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function L(key) {
+  var d = SITE_I18N[SITE_LANG] || SITE_I18N.zh;
+  return d[key] || SITE_I18N.zh[key] || key;
+}
+function applySiteLang() {
+  document.documentElement.lang = SITE_LANG === 'zh' ? 'zh-CN' : 'en';
+  var nodes = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < nodes.length; i++) {
+    var k = nodes[i].getAttribute('data-i18n');
+    var txt = L(k);
+    if (txt) nodes[i].textContent = txt;
+  }
+  document.getElementById('lang-tab').textContent = SITE_LANG === 'zh' ? 'EN' : '中文';
+  document.title = L('docTitle');
+}
+document.getElementById('lang-tab').addEventListener('click', function () {
+  SITE_LANG = SITE_LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('site-lang', SITE_LANG); } catch (e) {}
+  applySiteLang();
+});
+applySiteLang();
+
 (function () {
   var el = document.getElementById('url');
   var path = location.pathname + location.search;

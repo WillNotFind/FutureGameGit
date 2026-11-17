@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23ff6a3d'/><text x='32' y='46' font-size='34' font-family='Helvetica,Arial,sans-serif' font-weight='bold' text-anchor='middle' fill='%230b0d12'>W</text></svg>">
 <title>站点入口</title>
 <style>
@@ -27,7 +27,20 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
       "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
+  .lang-tab {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 40; padding: 10px 7px; background: rgba(11,13,18,0.85);
+    border: 1px solid rgba(255,255,255,0.22); border-right: none; border-radius: 8px 0 0 8px;
+    color: #ddd; font: 700 12px/1 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; letter-spacing: 1px;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+  }
+  .lang-tab:hover { color: var(--accent); border-color: var(--accent); }
   .wrap {
     max-width: 920px;
     margin: 0 auto;
@@ -59,7 +72,7 @@
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
     gap: 18px;
   }
   a.card {
@@ -72,11 +85,13 @@
     padding: 22px 22px 18px;
     transition: background .18s ease, transform .18s ease, border-color .18s ease;
   }
-  a.card:hover {
+  a.card:hover, a.card:focus-visible {
     background: var(--card-hover);
     border-color: rgba(255,106,61,0.45);
     transform: translateY(-3px);
+    outline: none;
   }
+  a.card:active { transform: translateY(0); }
   .icon {
     width: 42px; height: 42px;
     border-radius: 11px;
@@ -121,14 +136,6 @@
     padding: 3px 8px;
     letter-spacing: .02em;
   }
-  .empty {
-    border: 1px dashed var(--line);
-    border-radius: 16px;
-    padding: 26px 22px;
-    color: var(--muted);
-    font-size: 13.5px;
-    line-height: 1.7;
-  }
   footer {
     margin-top: 56px;
     padding-top: 22px;
@@ -143,78 +150,131 @@
   @media (max-width: 520px) {
     .wrap { padding: 48px 18px 40px; }
     h1 { font-size: 27px; }
+    .grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
+<button class="lang-tab" id="lang-tab" type="button">EN</button>
 <div class="wrap">
   <header>
     <div class="badge">Index</div>
-    <h1>站点入口</h1>
-    <p class="sub">这里收录我放在公网上的页面：一个 FPS 展示页、几个小游戏、一个离线可用的小工具。</p>
+    <h1 data-i18n="h1">站点入口</h1>
+    <p class="sub" data-i18n="sub">这里收录我放在公网上的页面：一个 FPS 展示页、几个小游戏、一个离线可用的小工具。</p>
   </header>
 
   <main class="grid">
     <a class="card" href="fps/">
       <div class="icon">A</div>
-      <h2 class="name">竞技场 FPS <span class="arrow">→</span></h2>
-      <p class="desc">竞技场题材的第一人称射击展示页，打开即玩。</p>
+      <h2 class="name"><span data-i18n="fpsName">竞技场 FPS</span> <span class="arrow">→</span></h2>
+      <p class="desc" data-i18n="fpsDesc">竞技场题材的第一人称射击页，打开即玩：弹药靠拾取，敌人会开火。</p>
       <div class="tags">
-        <span class="tag">FPS</span>
-        <span class="tag">单页</span>
-        <span class="tag">HTML</span>
+        <span class="tag" data-i18n="tFps">FPS</span>
+        <span class="tag" data-i18n="tMobile">手机可玩</span>
+        <span class="tag" data-i18n="tSingle">单页</span>
       </div>
     </a>
 
     <a class="card" href="2048/">
       <div class="icon">2</div>
       <h2 class="name">2048 <span class="arrow">→</span></h2>
-      <p class="desc">经典数字合并小游戏，键盘方向键或手机滑动都能玩。</p>
+      <p class="desc" data-i18n="g2048Desc">经典数字合并小游戏，键盘方向键或手机滑动都能玩。</p>
       <div class="tags">
-        <span class="tag">小游戏</span>
-        <span class="tag">纯前端</span>
-        <span class="tag">手机可玩</span>
+        <span class="tag" data-i18n="tGame">小游戏</span>
+        <span class="tag" data-i18n="tFrontend">纯前端</span>
+        <span class="tag" data-i18n="tMobile">手机可玩</span>
       </div>
     </a>
 
     <a class="card" href="snake/">
       <div class="icon">S</div>
-      <h2 class="name">贪吃蛇 <span class="arrow">→</span></h2>
-      <p class="desc">20×20 棋盘，吃一颗长一节，越吃越快，撞墙或咬到自己就结束。</p>
+      <h2 class="name"><span data-i18n="snakeName">贪吃蛇</span> <span class="arrow">→</span></h2>
+      <p class="desc" data-i18n="snakeDesc">20×20 棋盘，吃一颗长一节，越吃越快，撞墙或咬到自己就结束。</p>
       <div class="tags">
-        <span class="tag">小游戏</span>
+        <span class="tag" data-i18n="tGame">小游戏</span>
         <span class="tag">Canvas</span>
-        <span class="tag">手机可玩</span>
+        <span class="tag" data-i18n="tMobile">手机可玩</span>
       </div>
     </a>
 
     <a class="card" href="breakout/">
       <div class="icon">B</div>
-      <h2 class="name">打砖块 <span class="arrow">→</span></h2>
-      <p class="desc">清空砖块进下一关，挡板接球角度决定反弹方向，一关比一关快。</p>
+      <h2 class="name"><span data-i18n="breakoutName">打砖块</span> <span class="arrow">→</span></h2>
+      <p class="desc" data-i18n="breakoutDesc">清空砖块进下一关，挡板接球角度决定反弹方向，一关比一关快。</p>
       <div class="tags">
-        <span class="tag">小游戏</span>
+        <span class="tag" data-i18n="tGame">小游戏</span>
         <span class="tag">Canvas</span>
-        <span class="tag">关卡</span>
+        <span class="tag" data-i18n="tLevels">关卡</span>
       </div>
     </a>
 
     <a class="card" href="qrcode/">
       <div class="icon">Q</div>
-      <h2 class="name">二维码生成器 <span class="arrow">→</span></h2>
-      <p class="desc">输入任意文字或链接即时生成二维码，纯本地编码，内容不出浏览器。</p>
+      <h2 class="name"><span data-i18n="qrName">二维码生成器</span> <span class="arrow">→</span></h2>
+      <p class="desc" data-i18n="qrDesc">输入任意文字或链接即时生成二维码，纯本地编码，内容不出浏览器。</p>
       <div class="tags">
-        <span class="tag">工具</span>
-        <span class="tag">离线可用</span>
-        <span class="tag">可导出</span>
+        <span class="tag" data-i18n="tTool">工具</span>
+        <span class="tag" data-i18n="tOffline">离线可用</span>
+        <span class="tag" data-i18n="tExport">可导出</span>
       </div>
     </a>
   </main>
 
   <footer>
-    <span>静态托管 · GitHub Pages</span>
-    <span>更多页面陆续添加中</span>
+    <span data-i18n="footer1">静态托管 · GitHub Pages</span>
+    <span data-i18n="footer2">更多页面陆续添加中</span>
   </footer>
 </div>
+<script>
+// ---------- 自适应语言 ----------
+var I18N = {
+  zh: {
+    h1: '站点入口',
+    sub: '这里收录我放在公网上的页面：一个 FPS 展示页、几个小游戏、一个离线可用的小工具。',
+    fpsName: '竞技场 FPS', fpsDesc: '竞技场题材的第一人称射击页，打开即玩：弹药靠拾取，敌人会开火。',
+    snakeName: '贪吃蛇', snakeDesc: '20×20 棋盘，吃一颗长一节，越吃越快，撞墙或咬到自己就结束。',
+    breakoutName: '打砖块', breakoutDesc: '清空砖块进下一关，挡板接球角度决定反弹方向，一关比一关快。',
+    qrName: '二维码生成器', qrDesc: '输入任意文字或链接即时生成二维码，纯本地编码，内容不出浏览器。',
+    g2048Desc: '经典数字合并小游戏，键盘方向键或手机滑动都能玩。',
+    tFps: 'FPS', tMobile: '手机可玩', tSingle: '单页', tGame: '小游戏', tFrontend: '纯前端',
+    tLevels: '关卡', tTool: '工具', tOffline: '离线可用', tExport: '可导出',
+    footer1: '静态托管 · GitHub Pages', footer2: '更多页面陆续添加中'
+  },
+  en: {
+    h1: 'Site Index',
+    sub: 'Everything I have published: an FPS showcase, a few small games, and an offline utility.',
+    fpsName: 'Arena FPS', fpsDesc: 'First-person arena shooter, playable instantly: ammo comes from pickups, some enemies shoot back.',
+    snakeName: 'Snake', snakeDesc: '20×20 board, each apple grows the snake and speeds it up; walls and your own tail end the run.',
+    breakoutName: 'Breakout', breakoutDesc: 'Clear the bricks to reach the next stage; paddle angle sets the bounce, and every stage is faster.',
+    qrName: 'QR Code Generator', qrDesc: 'Turn any text or link into a QR code instantly. Encoding is local, nothing leaves the browser.',
+    g2048Desc: 'The classic merge puzzle. Arrow keys on desktop, swipe on phones.',
+    tFps: 'FPS', tMobile: 'Mobile ready', tSingle: 'Single page', tGame: 'Game', tFrontend: 'Pure front-end',
+    tLevels: 'Stages', tTool: 'Tool', tOffline: 'Offline', tExport: 'Exportable',
+    footer1: 'Static hosting · GitHub Pages', footer2: 'More pages on the way'
+  }
+};
+var LANG = '';
+try { LANG = localStorage.getItem('site-lang') || ''; } catch (e) {}
+if (LANG !== 'zh' && LANG !== 'en') {
+  LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function applyLang() {
+  var dict = I18N[LANG] || I18N.zh;
+  document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : 'en';
+  var nodes = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < nodes.length; i++) {
+    var k = nodes[i].getAttribute('data-i18n');
+    if (dict[k]) nodes[i].textContent = dict[k];
+  }
+  document.getElementById('lang-tab').textContent = LANG === 'zh' ? 'EN' : '中文';
+  document.title = dict.h1;
+}
+document.getElementById('lang-tab').addEventListener('click', function () {
+  LANG = LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('site-lang', LANG); } catch (e) {}
+  applyLang();
+});
+applyLang();
+</script>
 </body>
 </html>

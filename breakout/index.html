@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%235a8cff'/><rect x='14' y='46' width='36' height='8' rx='4' fill='%230b0d12'/><circle cx='32' cy='32' r='6' fill='%23eef3ff'/></svg>">
 <title>打砖块</title>
@@ -13,7 +13,8 @@
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
-    margin: 0; min-height: 100%; padding: 20px 16px 28px;
+    margin: 0; min-height: 100%;
+    padding: 20px max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     background: var(--bg);
     background-image:
       radial-gradient(900px 520px at 10% -10%, rgba(90,140,255,0.14), transparent 60%),
@@ -24,8 +25,17 @@
       "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
     display: flex; align-items: flex-start; justify-content: center;
+    touch-action: manipulation;
   }
   .app { width: min(94vw, 480px); }
+  .lang-tab {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 40; padding: 10px 7px; background: rgba(11,13,18,0.85);
+    border: 1px solid rgba(255,255,255,0.22); border-right: none; border-radius: 8px 0 0 8px;
+    color: #ddd; font: 700 12px/1 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; letter-spacing: 1px;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+  }
+  .lang-tab:hover { color: var(--accent); border-color: var(--accent); }
   .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.02em; line-height: 1.1; }
   .hint { color: var(--muted); font-size: 12.5px; margin: 0; }
@@ -42,7 +52,7 @@
   .overlay {
     position: absolute; inset: 0; display: none; flex-direction: column;
     align-items: center; justify-content: center; gap: 12px;
-    background: rgba(11,13,18,0.84); backdrop-filter: blur(3px); z-index: 5;
+    background: rgba(11,13,18,0.84); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); z-index: 5;
   }
   .overlay.show { display: flex; }
   .overlay .ot { font-size: 24px; font-weight: 700; margin: 0; }
@@ -59,6 +69,12 @@
   footer { margin-top: 14px; display: flex; justify-content: space-between; color: #5f677a; font-size: 11.5px; gap: 10px; flex-wrap: wrap; }
   footer a { color: #7d879c; text-decoration: none; }
   footer a:hover { color: var(--accent); }
+  @media (max-width: 420px) {
+    .head { flex-direction: column; align-items: stretch; gap: 10px; }
+    .hint { font-size: 12px; line-height: 1.5; }
+    .scores { width: 100%; }
+    .score-box { flex: 1; min-width: 0; }
+  }
   @media (max-width: 380px) {
     h1 { font-size: 25px; }
     .score-box { min-width: 58px; padding: 6px 9px; }
@@ -67,15 +83,16 @@
 </style>
 </head>
 <body>
+<button class="lang-tab" id="lang-tab" type="button">EN</button>
 <div class="app">
   <div class="head">
     <div>
-      <h1>打砖块</h1>
-      <p class="hint">鼠标 / 手指横向拖动，或 ← → 控制挡板</p>
+      <h1 data-i18n="title">打砖块</h1>
+      <p class="hint" data-i18n="hint">鼠标 / 手指横向拖动，或 ← → 控制挡板</p>
     </div>
     <div class="scores">
-      <div class="score-box"><span class="label">Score</span><span class="value" id="score">0</span></div>
-      <div class="score-box"><span class="label">Lives</span><span class="value" id="lives">3</span></div>
+      <div class="score-box"><span class="label" data-i18n="score">得分</span><span class="value" id="score">0</span></div>
+      <div class="score-box"><span class="label" data-i18n="lives">生命</span><span class="value" id="lives">3</span></div>
     </div>
   </div>
 
@@ -84,21 +101,74 @@
     <div class="overlay" id="overlay">
       <p class="ot" id="ovTitle">球掉了</p>
       <p class="os" id="ovSub">得分 0</p>
-      <button class="primary" id="ovBtn" style="flex:0 0 auto;padding:11px 22px">再来一局</button>
+      <button class="primary" id="ovBtn" style="flex:0 0 auto;padding:11px 22px" data-i18n="again">再来一局</button>
     </div>
   </div>
 
   <div class="bar">
-    <button class="primary" id="restart">重新开始</button>
-    <button id="pause">暂停</button>
+    <button class="primary" id="restart" data-i18n="restart">重新开始</button>
+    <button id="pause" data-i18n="pause">暂停</button>
   </div>
 
   <footer>
-    <span>清空砖块进入下一关，球会越来越快</span>
-    <a href="../">返回站点入口</a>
+    <span data-i18n="footHint">清空砖块进入下一关，球会越来越快</span>
+    <a href="../" data-i18n="back">返回站点入口</a>
   </footer>
 </div>
 
+<script>
+// ---------- 自适应语言 ----------
+var SITE_I18N = {
+  zh: {
+    title: '打砖块',
+    hint: '鼠标 / 手指横向拖动，或 ← → 控制挡板',
+    score: '得分', lives: '生命', restart: '重新开始', pause: '暂停', resume: '继续', again: '再来一局',
+    lost: '球掉了', lostSub: '得分 {s} · 到第 {l} 关',
+    level: '第 {l} 关', levelSub: '得分 {s}，速度更快了',
+    launchHint: '点击或空格发球',
+    footHint: '清空砖块进入下一关，球会越来越快', back: '返回站点入口'
+  },
+  en: {
+    title: 'Breakout',
+    hint: 'Drag with a mouse or finger, or use ← → to move the paddle',
+    score: 'Score', lives: 'Lives', restart: 'RESTART', pause: 'PAUSE', resume: 'RESUME', again: 'PLAY AGAIN',
+    lost: 'BALL LOST', lostSub: 'Score {s} · reached stage {l}',
+    level: 'STAGE {l}', levelSub: 'Score {s} — the ball is faster now',
+    launchHint: 'Click or press Space to launch',
+    footHint: 'Clear every brick to advance; each stage is faster', back: 'Site index'
+  }
+};
+var SITE_LANG = '';
+try { SITE_LANG = localStorage.getItem('site-lang') || ''; } catch (e) {}
+if (SITE_LANG !== 'zh' && SITE_LANG !== 'en') {
+  SITE_LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function L(key, vars) {
+  var d = SITE_I18N[SITE_LANG] || SITE_I18N.zh;
+  var s = d[key] || SITE_I18N.zh[key] || key;
+  if (!vars) return s;
+  return s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] !== undefined ? vars[k] : m; });
+}
+function applySiteLang() {
+  document.documentElement.lang = SITE_LANG === 'zh' ? 'zh-CN' : 'en';
+  var nodes = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < nodes.length; i++) {
+    var k = nodes[i].getAttribute('data-i18n');
+    if (k === 'pause') continue; // 暂停/继续按钮由游戏逻辑维护
+    var txt = L(k);
+    if (txt) nodes[i].textContent = txt;
+  }
+  document.getElementById('lang-tab').textContent = SITE_LANG === 'zh' ? 'EN' : '中文';
+  document.title = L('title');
+  try { window.dispatchEvent(new Event('langchange')); } catch (e) {}
+}
+document.getElementById('lang-tab').addEventListener('click', function () {
+  SITE_LANG = SITE_LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('site-lang', SITE_LANG); } catch (e) {}
+  applySiteLang();
+});
+applySiteLang();
+</script>
 <script>
 (function () {
   var W = 480, H = 360;
@@ -119,6 +189,7 @@
   var bricks = [], score = 0, lives = 3, level = 1;
   var paused = false, over = false, win = false, launched = false;
   var keys = {};
+  var overlayKind = null;
 
   function layout() {
     var dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -150,7 +221,8 @@
     paddle.x = W / 2 - paddle.w / 2;
     ball.x = W / 2; ball.y = H - 60; ball.dx = 0; ball.dy = 0;
     launched = false; paused = false; over = false; win = false;
-    pauseBtn.textContent = '暂停';
+    overlayKind = null;
+    pauseBtn.textContent = L('pause');
     overlay.classList.remove('show');
     draw();
   }
@@ -169,8 +241,8 @@
     livesEl.textContent = lives;
     if (lives <= 0) {
       over = true;
-      ovTitle.textContent = '球掉了';
-      ovSub.textContent = '得分 ' + score + ' · 到第 ' + level + ' 关';
+      overlayKind = 'lost';
+      renderOverlay();
       overlay.classList.add('show');
       return;
     }
@@ -225,18 +297,29 @@
       level += 1;
       buildBricks();
       ball.x = W / 2; ball.y = H - 60; ball.dx = 0; ball.dy = 0; launched = false;
-      ovTitle.textContent = '第 ' + level + ' 关';
-      ovSub.textContent = '得分 ' + score + '，速度更快了';
+      overlayKind = 'level';
+      renderOverlay();
       overlay.classList.add('show');
       paused = true;
-      pauseBtn.textContent = '继续';
+      pauseBtn.textContent = L('resume');
       setTimeout(function () {
         if (!over && overlay.classList.contains('show')) {
           overlay.classList.remove('show');
+          overlayKind = null;
           paused = false;
-          pauseBtn.textContent = '暂停';
+          pauseBtn.textContent = L('pause');
         }
       }, 900);
+    }
+  }
+
+  function renderOverlay() {
+    if (overlayKind === 'lost') {
+      ovTitle.textContent = L('lost');
+      ovSub.textContent = L('lostSub', { s: score, l: level });
+    } else if (overlayKind === 'level') {
+      ovTitle.textContent = L('level', { l: level });
+      ovSub.textContent = L('levelSub', { s: score });
     }
   }
 
@@ -279,7 +362,7 @@
       ctx.fillStyle = 'rgba(232,235,242,0.45)';
       ctx.font = '13px -apple-system, "PingFang SC", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('点击或空格发球', W / 2, H - 78);
+      ctx.fillText(L('launchHint'), W / 2, H - 78);
     }
   }
 
@@ -308,25 +391,40 @@
     launch();
   });
 
+  function keyDir(e) {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A' || e.code === 'KeyA') return 'left';
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' || e.code === 'KeyD') return 'right';
+    return null;
+  }
+  function isLaunchKey(e) {
+    return e.key === ' ' || e.code === 'Space' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.code === 'KeyW';
+  }
+
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.left = true; e.preventDefault(); }
-    else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.right = true; e.preventDefault(); }
-    else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+    var dir = keyDir(e);
+    if (dir) { keys[dir] = true; e.preventDefault(); return; }
+    if (isLaunchKey(e)) {
       e.preventDefault();
       if (over) reset(true);
       else launch();
     }
   });
   document.addEventListener('keyup', function (e) {
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+    var dir = keyDir(e);
+    if (dir) keys[dir] = false;
   });
 
   document.getElementById('restart').addEventListener('click', function () { reset(true); });
   pauseBtn.addEventListener('click', function () {
     if (over) { reset(true); return; }
     paused = !paused;
-    pauseBtn.textContent = paused ? '继续' : '暂停';
+    pauseBtn.textContent = L(paused ? 'resume' : 'pause');
+  });
+
+  window.addEventListener('langchange', function () {
+    pauseBtn.textContent = L(paused ? 'resume' : 'pause');
+    if (overlayKind && overlay.classList.contains('show')) renderOverlay();
+    draw();
   });
   document.getElementById('ovBtn').addEventListener('click', function () { reset(true); });
 

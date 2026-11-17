@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23ff6a3d'/><text x='32' y='46' font-size='38' font-family='Helvetica,Arial,sans-serif' font-weight='bold' text-anchor='middle' fill='%230b0d12'>2</text></svg>">
 <title>2048</title>
@@ -33,10 +33,22 @@
     align-items: center;
     justify-content: center;
     padding: 20px 16px 28px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
     min-height: 100%;
     overscroll-behavior: none;
+    touch-action: manipulation;
   }
   .app { width: min(94vw, 470px); }
+  .lang-tab {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 40; padding: 10px 7px; background: rgba(11,13,18,0.85);
+    border: 1px solid rgba(255,255,255,0.22); border-right: none; border-radius: 8px 0 0 8px;
+    color: #ddd; font: 700 12px/1 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; letter-spacing: 1px;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+  }
+  .lang-tab:hover { color: var(--accent); border-color: var(--accent); }
 
   .head {
     display: flex;
@@ -101,10 +113,12 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     will-change: transform;
-    transition: transform .14s cubic-bezier(.25,.8,.3,1);
+    transition: transform .14s cubic-bezier(.25,.8,.3,1), opacity .13s linear;
     backface-visibility: hidden;
   }
   .tile.moving-none { transition: none; }
+  /* 被吞掉的方块：滑到合并位置后淡出，避免盖在新方块上形成“重影” */
+  .tile.ghost { opacity: 0; }
   /* 注意：缩放必须用独立的 scale 属性，不能用 transform: scale()，
      否则会覆盖方块定位用的 transform: translate()，方块会被甩到左上角 */
   .tile.new { animation: pop .16s ease-out; }
@@ -153,6 +167,7 @@
     justify-content: center;
     gap: 14px;
     background: rgba(11,13,18,0.82);
+    -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
     z-index: 5;
     animation: fade .2s ease both;
@@ -178,6 +193,12 @@
   }
   footer a { color: #7d879c; text-decoration: none; }
   footer a:hover { color: var(--accent); }
+  @media (max-width: 420px) {
+    .head { flex-direction: column; align-items: stretch; gap: 10px; }
+    .hint { font-size: 12px; line-height: 1.5; }
+    .scores { width: 100%; }
+    .score-box { flex: 1; min-width: 0; }
+  }
   @media (max-width: 380px) {
     h1 { font-size: 25px; }
     .score-box { min-width: 66px; padding: 6px 10px; }
@@ -193,15 +214,16 @@
 </style>
 </head>
 <body>
+<button class="lang-tab" id="lang-tab" type="button">EN</button>
 <div class="app">
   <div class="head">
     <div>
       <h1>2048</h1>
-      <p class="hint">方向键或滑动合并数字，凑出 2048</p>
+      <p class="hint" data-i18n="hint">方向键或滑动合并数字，凑出 2048</p>
     </div>
     <div class="scores">
-      <div class="score-box"><span class="label">Score</span><span class="value" id="score">0</span></div>
-      <div class="score-box"><span class="label">Best</span><span class="value" id="best">0</span></div>
+      <div class="score-box"><span class="label" data-i18n="score">得分</span><span class="value" id="score">0</span></div>
+      <div class="score-box"><span class="label" data-i18n="best">最高</span><span class="value" id="best">0</span></div>
     </div>
   </div>
 
@@ -211,20 +233,70 @@
     <div class="overlay" id="overlay">
       <p class="ot" id="ovTitle">游戏结束</p>
       <p class="os" id="ovSub">本局得分 0</p>
-      <button class="primary" id="ovBtn">再来一局</button>
+      <button class="primary" id="ovBtn" data-i18n="again">再来一局</button>
     </div>
   </div>
 
   <div class="bar">
-    <button class="primary" id="newGame">新游戏</button>
-    <button id="undo">撤销一步</button>
+    <button class="primary" id="newGame" data-i18n="newGame">新游戏</button>
+    <button id="undo" data-i18n="undo">撤销一步</button>
   </div>
 
   <footer>
-    <span>键盘 ↑ ↓ ← → / WASD，手机直接滑动</span>
-    <a href="../">返回站点入口</a>
+    <span data-i18n="footHint">键盘 ↑ ↓ ← → / WASD，手机直接滑动</span>
+    <a href="../" data-i18n="back">返回站点入口</a>
   </footer>
 </div>
+
+<script>
+// ---------- 自适应语言（全站通用小脚本）----------
+var SITE_I18N = {
+  zh: {
+    hint: '方向键或滑动合并数字，凑出 2048',
+    score: '得分', best: '最高',
+    newGame: '新游戏', undo: '撤销一步', again: '再来一局',
+    over: '游戏结束', overSub: '本局得分 {s} · 最高 {b}',
+    win: '达成 2048', winSub: '继续挑战更大的数字',
+    footHint: '键盘 ↑ ↓ ← → / WASD，手机直接滑动', back: '返回站点入口'
+  },
+  en: {
+    hint: 'Merge tiles with arrow keys or swipes — reach 2048',
+    score: 'Score', best: 'Best',
+    newGame: 'NEW GAME', undo: 'UNDO', again: 'PLAY AGAIN',
+    over: 'GAME OVER', overSub: 'Score {s} · Best {b}',
+    win: 'YOU MADE 2048', winSub: 'Keep pushing for bigger numbers',
+    footHint: 'Arrow keys / WASD, or swipe on a phone', back: 'Site index'
+  }
+};
+var SITE_LANG = '';
+try { SITE_LANG = localStorage.getItem('site-lang') || ''; } catch (e) {}
+if (SITE_LANG !== 'zh' && SITE_LANG !== 'en') {
+  SITE_LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function L(key, vars) {
+  var d = SITE_I18N[SITE_LANG] || SITE_I18N.zh;
+  var s = d[key] || SITE_I18N.zh[key] || key;
+  if (!vars) return s;
+  return s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] !== undefined ? vars[k] : m; });
+}
+function applySiteLang() {
+  document.documentElement.lang = SITE_LANG === 'zh' ? 'zh-CN' : 'en';
+  var nodes = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < nodes.length; i++) {
+    var k = nodes[i].getAttribute('data-i18n');
+    var txt = L(k);
+    if (txt) nodes[i].textContent = txt;
+  }
+  document.getElementById('lang-tab').textContent = SITE_LANG === 'zh' ? 'EN' : '中文';
+  try { window.dispatchEvent(new Event('langchange')); } catch (e) {}
+}
+document.getElementById('lang-tab').addEventListener('click', function () {
+  SITE_LANG = SITE_LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('site-lang', SITE_LANG); } catch (e) {}
+  applySiteLang();
+});
+applySiteLang();
+</script>
 
 <script>
 (function () {
@@ -483,10 +555,12 @@
           a.el.classList.remove('merged');
           void a.el.offsetWidth;
           a.el.classList.add('merged');
-          // the swallowed tile slides into the same slot, then is removed
+          // the swallowed tile slides into the same slot, then fades out and is removed
           b.x = slot.x; b.y = slot.y;
           place(b.el, b.x, b.y);
-          b.el.style.zIndex = '1';
+          b.el.style.zIndex = '0';
+          a.el.style.zIndex = '1';
+          b.el.classList.add('ghost');
           removals.push(b.el);
           out.push(a);
           i += 2;
@@ -550,15 +624,15 @@
     pruneOrphans();
     if (!canMove()) {
       over = true;
+      overlayKind = 'over';
       pendingDir = null;
-      ovTitle.textContent = '游戏结束';
-      ovSub.textContent = '本局得分 ' + score + ' · 最高 ' + best;
+      renderOverlay('over');
       if (winTimer) { clearTimeout(winTimer); winTimer = null; }
       overlay.classList.add('show');
     } else if (won && !over) {
       won = false;
-      ovTitle.textContent = '达成 2048';
-      ovSub.textContent = '继续挑战更大的数字';
+      overlayKind = 'win';
+      renderOverlay('win');
       overlay.classList.add('show');
       if (winTimer) clearTimeout(winTimer);
       winTimer = setTimeout(function () {
@@ -580,6 +654,7 @@
     over = false;
     animating = false;
     pendingDir = null;
+    overlayKind = null;
     if (winTimer) { clearTimeout(winTimer); winTimer = null; }
     overlay.classList.remove('show');
     tilesLayer.innerHTML = '';
@@ -595,6 +670,7 @@
     history = null;
     over = false;
     pendingDir = null;
+    overlayKind = null;
     won = snap.won;
     if (winTimer) { clearTimeout(winTimer); winTimer = null; }
     overlay.classList.remove('show');
@@ -613,15 +689,34 @@
     }
   }
 
+  // ---------- 语言相关 ----------
+  function renderOverlay(kind) {
+    if (kind === 'over') {
+      ovTitle.textContent = L('over');
+      ovSub.textContent = L('overSub', { s: score, b: best });
+    } else if (kind === 'win') {
+      ovTitle.textContent = L('win');
+      ovSub.textContent = L('winSub');
+    }
+  }
+  window.addEventListener('langchange', function () {
+    if (overlayKind && overlay.classList.contains('show')) renderOverlay(overlayKind);
+  });
+
   // ---------- input ----------
   var KEYMAP = {
     ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
     a: 'left', d: 'right', w: 'up', s: 'down',
     A: 'left', D: 'right', W: 'up', S: 'down'
   };
+  // 部分系统/浏览器布局下 e.key 会随输入法或键盘布局变化，用 e.code 兜底
+  var KEYMAP_CODE = {
+    ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+    KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down'
+  };
   document.addEventListener('keydown', function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    var dir = KEYMAP[e.key];
+    var dir = KEYMAP[e.key] || KEYMAP_CODE[e.code];
     if (!dir) return;
     e.preventDefault();
     move(dir);

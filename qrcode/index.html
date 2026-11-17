@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0d12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23e8ebf2'/><rect x='12' y='12' width='16' height='16' fill='%230b0d12'/><rect x='36' y='12' width='16' height='16' fill='%230b0d12'/><rect x='12' y='36' width='16' height='16' fill='%230b0d12'/></svg>">
 <title>二维码生成器</title>
@@ -13,7 +13,8 @@
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; min-height: 100%; padding: 28px 16px 36px;
+    margin: 0; min-height: 100%;
+    padding: 28px max(16px, env(safe-area-inset-right)) max(36px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     background: var(--bg);
     background-image:
       radial-gradient(900px 520px at 8% -10%, rgba(255,106,61,0.12), transparent 60%),
@@ -24,8 +25,17 @@
       "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     -webkit-font-smoothing: antialiased;
     display: flex; justify-content: center;
+    touch-action: manipulation;
   }
   .app { width: min(94vw, 720px); }
+  .lang-tab {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 40; padding: 10px 7px; background: rgba(11,13,18,0.85);
+    border: 1px solid rgba(255,255,255,0.22); border-right: none; border-radius: 8px 0 0 8px;
+    color: #ddd; font: 700 12px/1 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; letter-spacing: 1px;
+    cursor: pointer; -webkit-user-select: none; user-select: none;
+  }
+  .lang-tab:hover { color: var(--accent); border-color: var(--accent); }
   .head { margin-bottom: 20px; }
   h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.02em; }
   .hint { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
@@ -73,29 +83,30 @@
 </style>
 </head>
 <body>
+<button class="lang-tab" id="lang-tab" type="button">EN</button>
 <div class="app">
   <div class="head">
-    <h1>二维码生成器</h1>
-    <p class="hint">纯前端生成，内容不会上传到任何服务器。支持中文与链接。</p>
+    <h1 data-i18n="title">二维码生成器</h1>
+    <p class="hint" data-i18n="hint">纯前端生成，内容不会上传到任何服务器。支持中文与链接。</p>
   </div>
 
   <div class="grid">
     <div class="card">
-      <label class="field" for="text">内容</label>
-      <textarea id="text" placeholder="输入网址或任意文字，例如 https://willnotfind.github.io/arenafps/">https://willnotfind.github.io/arenafps/</textarea>
+      <label class="field" for="text" data-i18n="contentLabel">内容</label>
+      <textarea id="text" data-i18n-placeholder="phContent" placeholder="输入网址或任意文字，例如 https://willnotfind.github.io/arenafps/">https://willnotfind.github.io/arenafps/</textarea>
 
       <div class="row">
         <div class="f">
-          <label class="field" for="ecc">纠错等级</label>
+          <label class="field" for="ecc" data-i18n="eccLabel">纠错等级</label>
           <select id="ecc">
-            <option value="L">L · 约 7%</option>
-            <option value="M" selected>M · 约 15%</option>
-            <option value="Q">Q · 约 25%</option>
-            <option value="H">H · 约 30%</option>
+            <option value="L">L · 7%</option>
+            <option value="M" selected>M · 15%</option>
+            <option value="Q">Q · 25%</option>
+            <option value="H">H · 30%</option>
           </select>
         </div>
         <div class="f">
-          <label class="field" for="size">导出尺寸</label>
+          <label class="field" for="size" data-i18n="sizeLabel">导出尺寸</label>
           <select id="size">
             <option value="256">256 px</option>
             <option value="512" selected>512 px</option>
@@ -105,8 +116,8 @@
       </div>
 
       <div class="actions">
-        <button class="primary" id="download">下载 PNG</button>
-        <button id="clear">清空</button>
+        <button class="primary" id="download" data-i18n="download">下载 PNG</button>
+        <button id="clear" data-i18n="clear">清空</button>
       </div>
       <p class="err" id="err"></p>
     </div>
@@ -118,11 +129,75 @@
   </div>
 
   <footer>
-    <span>离线可用 · 编码库 qrcode-generator（MIT，Kazuhiko Arase）</span>
-    <a href="../">返回站点入口</a>
+    <span data-i18n="footer">离线可用 · 编码库 qrcode-generator（MIT，Kazuhiko Arase）</span>
+    <a href="../" data-i18n="back">返回站点入口</a>
   </footer>
 </div>
 
+<script>
+// ---------- 自适应语言 ----------
+var SITE_I18N = {
+  zh: {
+    title: '二维码生成器',
+    hint: '纯前端生成，内容不会上传到任何服务器。支持中文与链接。',
+    contentLabel: '内容', phContent: '输入网址或任意文字，例如 https://willnotfind.github.io/arenafps/',
+    eccLabel: '纠错等级', sizeLabel: '导出尺寸',
+    download: '下载 PNG', clear: '清空',
+    waitInput: '等待输入…',
+    cannot: '无法生成',
+    tooLong: '内容过长，或包含无法编码的字符。可降低纠错等级，或缩短内容。',
+    exportFail: '导出失败，试试换个浏览器。',
+    meta: '{n} × {n} 模块 · 纠错 {e} · {px} px（每格 {s} px）',
+    footer: '离线可用 · 编码库 qrcode-generator（MIT，Kazuhiko Arase）', back: '返回站点入口'
+  },
+  en: {
+    title: 'QR Code Generator',
+    hint: 'Everything runs in your browser — nothing is uploaded. Chinese text and links are supported.',
+    contentLabel: 'Content', phContent: 'Enter a URL or any text, e.g. https://willnotfind.github.io/arenafps/',
+    eccLabel: 'Error correction', sizeLabel: 'Export size',
+    download: 'DOWNLOAD PNG', clear: 'CLEAR',
+    waitInput: 'Waiting for input…',
+    cannot: 'Cannot generate',
+    tooLong: 'Content is too long or contains characters that cannot be encoded. Lower the error correction level or shorten the content.',
+    exportFail: 'Export failed — try another browser.',
+    meta: '{n} × {n} modules · ECC {e} · {px} px ({s} px per module)',
+    footer: 'Works offline · library qrcode-generator (MIT, Kazuhiko Arase)', back: 'Site index'
+  }
+};
+var SITE_LANG = '';
+try { SITE_LANG = localStorage.getItem('site-lang') || ''; } catch (e) {}
+if (SITE_LANG !== 'zh' && SITE_LANG !== 'en') {
+  SITE_LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function L(key, vars) {
+  var d = SITE_I18N[SITE_LANG] || SITE_I18N.zh;
+  var s = d[key] || SITE_I18N.zh[key] || key;
+  if (!vars) return s;
+  return s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] !== undefined ? vars[k] : m; });
+}
+function applySiteLang() {
+  document.documentElement.lang = SITE_LANG === 'zh' ? 'zh-CN' : 'en';
+  var nodes = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < nodes.length; i++) {
+    var k = nodes[i].getAttribute('data-i18n');
+    var txt = L(k);
+    if (txt) nodes[i].textContent = txt;
+  }
+  var phs = document.querySelectorAll('[data-i18n-placeholder]');
+  for (var j = 0; j < phs.length; j++) {
+    phs[j].setAttribute('placeholder', L(phs[j].getAttribute('data-i18n-placeholder')));
+  }
+  document.getElementById('lang-tab').textContent = SITE_LANG === 'zh' ? 'EN' : '中文';
+  document.title = L('title');
+  try { window.dispatchEvent(new Event('langchange')); } catch (e) {}
+}
+document.getElementById('lang-tab').addEventListener('click', function () {
+  SITE_LANG = SITE_LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('site-lang', SITE_LANG); } catch (e) {}
+  applySiteLang();
+});
+applySiteLang();
+</script>
 <script src="qrcode.js"></script>
 <script>
 (function () {
@@ -143,7 +218,7 @@
     errEl.textContent = '';
     if (!text) {
       cv.width = 0; cv.height = 0;
-      meta.textContent = '等待输入…';
+      meta.textContent = L('waitInput');
       lastOk = false;
       dlBtn.disabled = true;
       return;
@@ -173,13 +248,13 @@
           }
         }
       }
-      meta.textContent = count + ' × ' + count + ' 模块 · 纠错 ' + eccSel.value + ' · ' + px + ' px（每格 ' + scale + ' px）';
+      meta.textContent = L('meta', { n: count, e: eccSel.value, px: px, s: scale });
       lastOk = true;
       dlBtn.disabled = false;
     } catch (e) {
       cv.width = 0; cv.height = 0;
-      meta.textContent = '无法生成';
-      errEl.textContent = '内容过长，或包含无法编码的字符。可降低纠错等级，或缩短内容。';
+      meta.textContent = L('cannot');
+      errEl.textContent = L('tooLong');
       lastOk = false;
       dlBtn.disabled = true;
     }
@@ -203,7 +278,7 @@
     if (!lastOk) return;
     var text = ta.value.trim().slice(0, 24).replace(/[\\/:*?"<>|\s]+/g, '_') || 'qrcode';
     cv.toBlob(function (blob) {
-      if (!blob) { errEl.textContent = '导出失败，试试换个浏览器。'; return; }
+      if (!blob) { errEl.textContent = L('exportFail'); return; }
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = text + '.png';
@@ -215,6 +290,8 @@
       }, 1000);
     }, 'image/png');
   });
+
+  window.addEventListener('langchange', function () { render(); });
 
   render();
 })();

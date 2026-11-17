@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231a1a2e'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23ff3b3b' stroke-width='3'/%3E%3Cline x1='32' y1='10' x2='32' y2='22' stroke='%23ff3b3b' stroke-width='3'/%3E%3Cline x1='32' y1='42' x2='32' y2='54' stroke='%23ff3b3b' stroke-width='3'/%3E%3Cline x1='10' y1='32' x2='22' y2='32' stroke='%23ff3b3b' stroke-width='3'/%3E%3Cline x1='42' y1='32' x2='54' y2='32' stroke='%23ff3b3b' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='3' fill='%23ff3b3b'/%3E%3C/svg%3E">
 <title>竞技场 FPS</title>
 <style>
@@ -40,7 +40,7 @@
   /* ===== HUD ===== */
   #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; display: none; }
   .hud-panel {
-    position: absolute; background: rgba(10,10,20,0.55); backdrop-filter: blur(6px);
+    position: absolute; background: rgba(10,10,20,0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
     border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 10px 16px;
   }
   #hud-health { bottom: 24px; left: 24px; min-width: 200px; }
@@ -150,6 +150,84 @@
     padding: 10px 24px; font-size: 16px; font-weight: 600; z-index: 12; opacity: 0;
     transition: opacity 0.3s; pointer-events: none;
   }
+  /* ===== 触屏提示 ===== */
+  .touch-hint { display: none; margin-top: 18px; font-size: 13px; line-height: 1.9; color: #8a8fa3; }
+  body.touch .touch-hint { display: block; }
+
+  /* ===== 语言切换 ===== */
+  .lang-tab {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 40; padding: 10px 7px; background: rgba(10,10,20,0.78);
+    border: 1px solid rgba(255,255,255,0.22); border-right: none; border-radius: 8px 0 0 8px;
+    color: #ddd; font: 700 12px/1 'Segoe UI', 'Microsoft YaHei', sans-serif; letter-spacing: 1px;
+    cursor: pointer; pointer-events: auto; -webkit-user-select: none; user-select: none;
+  }
+  .lang-tab:hover { color: #ff6b35; border-color: #ff6b35; }
+
+  /* ===== 触屏控制 ===== */
+  #touch-ui { position: fixed; inset: 0; z-index: 12; display: none; pointer-events: none; }
+  #look-pad { position: absolute; right: 0; top: 0; width: 58%; height: 100%; pointer-events: auto; touch-action: none; }
+  #joy-base {
+    position: absolute; left: max(20px, env(safe-area-inset-left)); bottom: calc(110px + env(safe-area-inset-bottom));
+    width: 124px; height: 124px; border-radius: 50%;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.24);
+    pointer-events: auto; touch-action: none;
+  }
+  #joy-stick {
+    position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px;
+    border-radius: 50%; background: rgba(255,107,53,0.5); border: 1px solid rgba(255,150,110,0.85);
+  }
+  #touch-buttons {
+    position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: calc(104px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  }
+  .tbtn {
+    pointer-events: auto; touch-action: none; border: none; border-radius: 50%;
+    width: 64px; height: 64px; font-size: 12px; font-weight: 700; color: #fff;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3);
+    -webkit-tap-highlight-color: transparent; font-family: inherit;
+  }
+  .tbtn.fire { width: 86px; height: 86px; font-size: 14px; background: rgba(255,59,59,0.42); border-color: rgba(255,90,90,0.85); }
+  .tbtn.small { width: 54px; height: 54px; font-size: 11px; }
+  .tbtn:active { background: rgba(255,255,255,0.3); }
+
+  /* ===== 屏宽自适应 ===== */
+  @media (max-width: 820px), (max-height: 520px) {
+    .overlay h1 { font-size: 40px; letter-spacing: 4px; }
+    .overlay .subtitle { font-size: 13px; margin-bottom: 24px; }
+    .overlay .stats { gap: 24px; margin-bottom: 24px; }
+    .overlay .stat-num { font-size: 30px; }
+    .btn-start { padding: 12px 36px; font-size: 16px; }
+    .controls-info { display: none; }
+    #hud-health { min-width: 0; padding: 6px 10px; bottom: calc(16px + env(safe-area-inset-bottom)); left: max(12px, env(safe-area-inset-left)); transform: scale(0.86); transform-origin: bottom left; }
+    #hud-ammo { min-width: 0; padding: 6px 10px; bottom: calc(16px + env(safe-area-inset-bottom)); right: max(12px, env(safe-area-inset-right)); transform: scale(0.9); transform-origin: bottom right; }
+    #hud-weapon, #hud-grenade { display: none; }
+    #hud-score { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); transform: scale(0.82); transform-origin: top left; }
+    #hud-wave { top: max(10px, env(safe-area-inset-top)); }
+    #minimap-wrap { top: max(10px, env(safe-area-inset-top)); right: 44px; transform: scale(0.68); transform-origin: top right; }
+    #weapon-slots { display: none; }
+    #weapon-view { width: 200px; height: 150px; right: 8px; }
+    #reload-indicator { bottom: 150px; right: 16px; font-size: 11px; }
+    #pickup-toast { font-size: 14px; padding: 8px 16px; }
+    #crosshair { width: 18px; height: 18px; }
+  }
+  /* 极窄屏（手机竖屏）：进一步压缩 HUD，避免互相遮挡 */
+  @media (max-width: 560px) {
+    #minimap-wrap { display: none; }
+    #hud-wave { left: auto; right: 10px; top: 10px; transform: scale(0.78); transform-origin: top right; }
+    #hud-ammo { top: 64px; right: 10px; bottom: auto; transform: scale(0.78); transform-origin: top right; }
+    #hud-score { transform: scale(0.72); }
+    #hud-ammo { transform: scale(0.8); }
+    #hud-health { transform: scale(0.8); }
+    #weapon-view { width: 168px; height: 126px; right: -14px; bottom: -34px; opacity: 0.92; }
+    .overlay h1 { font-size: 30px; letter-spacing: 2px; }
+    .overlay .stats { gap: 14px; }
+    .overlay .stat-num { font-size: 24px; }
+    .btn-start { padding: 10px 26px; font-size: 15px; }
+  }
+  body.touch #hud-grenade { display: none; }
+  body.touch .controls-info { display: none; }
+  body.touch #hud-ammo { right: max(12px, env(safe-area-inset-right)); }
 </style>
 </head>
 <body>
@@ -169,39 +247,39 @@
 <!-- HUD -->
 <div id="hud">
   <div class="hud-panel" id="hud-health">
-    <div class="hud-label">生命值</div>
+    <div class="hud-label" data-i18n="health">生命值</div>
     <div class="hud-value" id="health-text">100</div>
     <div id="health-bar-wrap"><div id="health-bar"></div></div>
     <div id="shield-bar-wrap"><div id="shield-bar"></div></div>
   </div>
   <div class="hud-panel" id="hud-ammo">
-    <div class="hud-label">弹药</div>
-    <div class="hud-value"><span id="ammo-current">30</span> <span style="font-size:16px;color:#888">/ <span id="ammo-reserve">∞</span></span></div>
+    <div class="hud-label" data-i18n="ammo">弹药</div>
+    <div class="hud-value"><span id="ammo-current">30</span> <span style="font-size:16px;color:#888">/ <span id="ammo-reserve">30</span></span></div>
   </div>
   <div class="hud-panel" id="hud-weapon">
-    <div class="hud-label">当前武器</div>
+    <div class="hud-label" data-i18n="curWeapon">当前武器</div>
     <div class="hud-value small" id="weapon-name">突击步枪</div>
   </div>
   <div class="hud-panel" id="hud-grenade">
-    <div class="hud-label">手雷 [G]</div>
+    <div class="hud-label" data-i18n="grenade">手雷 [G]</div>
     <div class="hud-value small">∞</div>
   </div>
   <div class="hud-panel" id="hud-score">
-    <div class="hud-label">击杀</div>
+    <div class="hud-label" data-i18n="kills">击杀</div>
     <div class="hud-value small" id="score-text">0</div>
   </div>
   <div class="hud-panel" id="hud-wave">
-    <div class="hud-label">波次</div>
+    <div class="hud-label" data-i18n="wave">波次</div>
     <div class="hud-value small" id="wave-text">1</div>
   </div>
   <div id="buffs"></div>
   <div id="weapon-slots">
-    <div class="weapon-slot active" data-w="rifle"><span class="key">1</span><span class="wname">步枪</span></div>
-    <div class="weapon-slot" data-w="pistol"><span class="key">2</span><span class="wname">手枪</span></div>
-    <div class="weapon-slot" data-w="shotgun"><span class="key">3</span><span class="wname">霰弹</span></div>
-    <div class="weapon-slot" data-w="sniper"><span class="key">4</span><span class="wname">狙击</span></div>
+    <div class="weapon-slot active" data-w="rifle"><span class="key">1</span><span class="wname" data-i18n="wRifleShort">步枪</span></div>
+    <div class="weapon-slot" data-w="pistol"><span class="key">2</span><span class="wname" data-i18n="wPistolShort">手枪</span></div>
+    <div class="weapon-slot" data-w="shotgun"><span class="key">3</span><span class="wname" data-i18n="wShotgunShort">霰弹</span></div>
+    <div class="weapon-slot" data-w="sniper"><span class="key">4</span><span class="wname" data-i18n="wSniperShort">狙击</span></div>
   </div>
-  <div id="reload-indicator">换弹中...</div>
+  <div id="reload-indicator" data-i18n="reloading">换弹中...</div>
 </div>
 
 <!-- 小地图 -->
@@ -211,42 +289,134 @@
 
 <div id="damage-overlay"></div>
 
+<!-- 语言切换 -->
+<button class="lang-tab" id="lang-tab" type="button">EN</button>
+
+<!-- 触屏控制 -->
+<div id="touch-ui">
+  <div id="look-pad"></div>
+  <div id="joy-base"><div id="joy-stick"></div></div>
+  <div id="touch-buttons">
+    <button class="tbtn small" id="btn-switch" type="button" data-i18n="switchWeapon">换枪</button>
+    <button class="tbtn small" id="btn-reload" type="button" data-i18n="reload">换弹</button>
+    <button class="tbtn small" id="btn-jump" type="button" data-i18n="jump">跳</button>
+    <button class="tbtn fire" id="btn-fire" type="button" data-i18n="fire">开火</button>
+  </div>
+</div>
+
 <!-- 开始界面 -->
 <div class="overlay" id="start-screen">
-  <h1>竞技场 FPS</h1>
-  <div class="subtitle">ARENA · FIRST PERSON SHOOTER</div>
-  <button class="btn-start" id="btn-start" onclick="startGame()">开始游戏</button>
+  <h1 data-i18n="title">竞技场 FPS</h1>
+  <div class="subtitle" data-i18n="tagline">ARENA · FIRST PERSON SHOOTER</div>
+  <button class="btn-start" id="btn-start" onclick="startGame()" data-i18n="start">开始游戏</button>
   <div class="controls-info">
-    <div><span class="key">W A S D</span>移动</div>
-    <div><span class="key">鼠标</span>视角</div>
-    <div><span class="key">左键</span>射击</div>
-    <div><span class="key">右键</span>瞄准</div>
-    <div><span class="key">R</span>换弹</div>
-    <div><span class="key">G</span>手雷</div>
-    <div><span class="key">1-4</span>切换武器</div>
-    <div><span class="key">空格</span>跳跃</div>
-    <div><span class="key">Shift</span>冲刺</div>
-    <div><span class="key">滚轮</span>切换武器</div>
+    <div><span class="key">W A S D</span><span data-i18n="cMove">移动</span></div>
+    <div><span class="key" data-i18n="cMouseKey">鼠标</span><span data-i18n="cLook">视角</span></div>
+    <div><span class="key" data-i18n="cLmb">左键</span><span data-i18n="cFire">射击</span></div>
+    <div><span class="key" data-i18n="cRmb">右键</span><span data-i18n="cAds">瞄准</span></div>
+    <div><span class="key">R</span><span data-i18n="cReload">换弹</span></div>
+    <div><span class="key">G</span><span data-i18n="cGrenade">手雷</span></div>
+    <div><span class="key">1-4</span><span data-i18n="cSwitch">切换武器</span></div>
+    <div><span class="key" data-i18n="cSpaceKey">空格</span><span data-i18n="cJump">跳跃</span></div>
+    <div><span class="key">Shift</span><span data-i18n="cSprint">冲刺</span></div>
+    <div><span class="key" data-i18n="cWheelKey">滚轮</span><span data-i18n="cSwitch">切换武器</span></div>
+  </div>
+  <div class="touch-hint" id="touch-hint">
+    <div data-i18n="touchHint1">左摇杆移动 · 右半屏拖动视角</div>
+    <div data-i18n="touchHint2">点「开火」射击 · 弹药必须靠拾取补充</div>
   </div>
 </div>
 
 <!-- 结束界面 -->
 <div class="overlay" id="game-over">
-  <h1 style="font-size:48px">任务失败</h1>
+  <h1 style="font-size:48px" data-i18n="gameOver">任务失败</h1>
   <div class="subtitle">GAME OVER</div>
   <div class="stats">
-    <div class="stat-item"><div class="stat-num" id="final-kills">0</div><div class="stat-label">击杀数</div></div>
-    <div class="stat-item"><div class="stat-num" id="final-wave">1</div><div class="stat-label">到达波次</div></div>
-    <div class="stat-item"><div class="stat-num" id="final-accuracy">0%</div><div class="stat-label">命中率</div></div>
+    <div class="stat-item"><div class="stat-num" id="final-kills">0</div><div class="stat-label" data-i18n="kills">击杀数</div></div>
+    <div class="stat-item"><div class="stat-num" id="final-wave">1</div><div class="stat-label" data-i18n="reachedWave">到达波次</div></div>
+    <div class="stat-item"><div class="stat-num" id="final-accuracy">0%</div><div class="stat-label" data-i18n="accuracy">命中率</div></div>
   </div>
-  <button class="btn-start" id="btn-restart" onclick="startGame()">再来一局</button>
+  <button class="btn-start" id="btn-restart" onclick="startGame()" data-i18n="restart">再来一局</button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="three.min.js"></script>
 <script>
 // ============================================================
 //  竞技场 FPS v2 — 多武器 / 手雷 / 道具 / 小地图 / 瞄准
 // ============================================================
+
+// ---------- 自适应语言 ----------
+const I18N = {
+  zh: {
+    title: '竞技场 FPS', tagline: 'ARENA · FIRST PERSON SHOOTER',
+    start: '开始游戏', restart: '再来一局', gameOver: '任务失败',
+    health: '生命值', ammo: '弹药', curWeapon: '当前武器', grenade: '手雷 [G]',
+    kills: '击杀', wave: '波次', reachedWave: '到达波次', accuracy: '命中率',
+    reloading: '换弹中...',
+    cMove: '移动', cLook: '视角', cFire: '射击', cAds: '瞄准', cReload: '换弹',
+    cGrenade: '手雷', cSwitch: '切换武器', cJump: '跳跃', cSprint: '冲刺',
+    cMouseKey: '鼠标', cLmb: '左键', cRmb: '右键', cSpaceKey: '空格', cWheelKey: '滚轮',
+    touchHint1: '左摇杆移动 · 右半屏拖动视角',
+    touchHint2: '点「开火」射击 · 弹药靠拾取补充',
+    fire: '开火', reload: '换弹', jump: '跳', switchWeapon: '换枪',
+    wRifle: '突击步枪', wPistol: '手枪', wShotgun: '霰弹枪', wSniper: '狙击枪',
+    wRifleShort: '步枪', wPistolShort: '手枪', wShotgunShort: '霰弹', wSniperShort: '狙击',
+    pHealth: '医疗包 +50 HP', pSpeed: '加速药剂 10秒', pShield: '能量护盾 +50',
+    pAmmoRifle: '步枪弹 +60', pAmmoPistol: '手枪弹 +36', pAmmoShotgun: '霰弹 +18', pAmmoSniper: '狙击弹 +10',
+    outOfAmmo: '没有弹药了 · 去找弹药箱',
+    buffSpeed: '加速', buffShield: '护盾',
+    waveIncoming: '第 {n} 波来袭',
+  },
+  en: {
+    title: 'ARENA FPS', tagline: 'ARENA · FIRST PERSON SHOOTER',
+    start: 'START GAME', restart: 'PLAY AGAIN', gameOver: 'MISSION FAILED',
+    health: 'HEALTH', ammo: 'AMMO', curWeapon: 'WEAPON', grenade: 'GRENADE [G]',
+    kills: 'KILLS', wave: 'WAVE', reachedWave: 'WAVE REACHED', accuracy: 'ACCURACY',
+    reloading: 'RELOADING...',
+    cMove: 'Move', cLook: 'Aim', cFire: 'Fire', cAds: 'ADS', cReload: 'Reload',
+    cGrenade: 'Grenade', cSwitch: 'Switch weapon', cJump: 'Jump', cSprint: 'Sprint',
+    cMouseKey: 'Mouse', cLmb: 'LMB', cRmb: 'RMB', cSpaceKey: 'Space', cWheelKey: 'Wheel',
+    touchHint1: 'Left stick moves · drag right half to look',
+    touchHint2: 'Tap FIRE to shoot · ammo only from pickups',
+    fire: 'FIRE', reload: 'RELOAD', jump: 'JUMP', switchWeapon: 'SWAP',
+    wRifle: 'Assault Rifle', wPistol: 'Pistol', wShotgun: 'Shotgun', wSniper: 'Sniper Rifle',
+    wRifleShort: 'RIFLE', wPistolShort: 'PISTOL', wShotgunShort: 'SHOTGUN', wSniperShort: 'SNIPER',
+    pHealth: 'Med kit +50 HP', pSpeed: 'Speed boost 10s', pShield: 'Shield +50',
+    pAmmoRifle: 'Rifle ammo +60', pAmmoPistol: 'Pistol ammo +36', pAmmoShotgun: 'Shells +18', pAmmoSniper: 'Sniper ammo +10',
+    outOfAmmo: 'OUT OF AMMO · find an ammo crate',
+    buffSpeed: 'Speed', buffShield: 'Shield',
+    waveIncoming: 'WAVE {n} INCOMING',
+  }
+};
+let LANG = 'en';
+try { LANG = localStorage.getItem('arenafps-lang') || ''; } catch (e) {}
+if (LANG !== 'zh' && LANG !== 'en') {
+  LANG = (navigator.language || navigator.userLanguage || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+function t(key, vars) {
+  const s = (I18N[LANG] && I18N[LANG][key]) || I18N.zh[key] || key;
+  if (!vars) return s;
+  return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
+}
+function applyLang() {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : 'en';
+  const nodes = document.querySelectorAll('[data-i18n]');
+  for (let i = 0; i < nodes.length; i++) nodes[i].textContent = t(nodes[i].getAttribute('data-i18n'));
+  const tabEl = document.getElementById('lang-tab');
+  if (tabEl) tabEl.textContent = LANG === 'zh' ? 'EN' : '中文';
+  document.title = I18N[LANG].title;
+  const wn = document.getElementById('weapon-name');
+  if (wn && typeof STATE !== 'undefined' && STATE.currentWeapon) wn.textContent = tName(STATE.currentWeapon);
+  if (typeof updateBuffs === 'function') updateBuffs();
+  if (typeof updateHUD === 'function') updateHUD();
+}
+function toggleLang() {
+  LANG = LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('arenafps-lang', LANG); } catch (e) {}
+  applyLang();
+}
+function tName(w) { return t('w' + w.charAt(0).toUpperCase() + w.slice(1)); }
+document.getElementById('lang-tab').addEventListener('click', toggleLang);
 
 // ---------- 武器定义 ----------
 const WEAPONS = {
@@ -315,7 +485,12 @@ const STATE = {
   maxHealth: 100,
   shield: 0,
   maxShield: 50,
-  ammo: { rifle: 30, pistol: 12, shotgun: 6, sniper: 5 },
+  ammo: {
+    rifle:   { mag: 30, reserve: 30 },
+    pistol:  { mag: 12, reserve: 0 },
+    shotgun: { mag: 6,  reserve: 0 },
+    sniper:  { mag: 5,  reserve: 0 },
+  },
   currentWeapon: 'rifle',
   score: 0,
   wave: 1,
@@ -323,6 +498,7 @@ const STATE = {
   shotsHit: 0,
   reloading: false,
   enemies: [],
+  bullets: [],
   grenades: [],
   pickups: [],
   lastShot: 0,
@@ -413,6 +589,27 @@ const keys = {};
 let mouseLocked = false;
 let mouseDown = false;
 
+// ---------- 设备自适应 ----------
+const IS_TOUCH = ('ontouchstart' in window) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+const CAN_LOCK = !!canvas.requestPointerLock;
+if (IS_TOUCH) document.body.classList.add('touch');
+const touchState = { moveX: 0, moveY: 0, joyId: null, lookId: null, lookX: 0, lookY: 0, firing: false };
+
+function requestLock() {
+  if (IS_TOUCH || !CAN_LOCK) return;
+  try {
+    const p = canvas.requestPointerLock();
+    if (p && typeof p.then === 'function') p.catch(() => {});
+  } catch (e) {}
+}
+function releaseLock() {
+  if (!CAN_LOCK) return;
+  try { document.exitPointerLock(); } catch (e) {}
+}
+function clampPitch() {
+  player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
+}
+
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if (e.code === 'KeyR') tryReload();
@@ -429,11 +626,28 @@ document.addEventListener('mousemove', e => {
   const sens = STATE.aiming ? 0.0012 : 0.0022;
   player.yaw -= e.movementX * sens;
   player.pitch -= e.movementY * sens;
-  player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
+  clampPitch();
+});
+
+// 指针锁不可用（部分浏览器/内嵌环境）时的拖拽视角兜底
+let dragLook = false, dragX = 0, dragY = 0;
+canvas.addEventListener('mousedown', e => {
+  if (e.button === 0 && !mouseLocked && STATE.playing && !IS_TOUCH) {
+    dragLook = true; dragX = e.clientX; dragY = e.clientY;
+  }
+});
+window.addEventListener('mouseup', () => { dragLook = false; });
+window.addEventListener('mousemove', e => {
+  if (!dragLook || mouseLocked) return;
+  const sens = STATE.aiming ? 0.002 : 0.0032;
+  player.yaw -= (e.clientX - dragX) * sens;
+  player.pitch -= (e.clientY - dragY) * sens;
+  clampPitch();
+  dragX = e.clientX; dragY = e.clientY;
 });
 
 canvas.addEventListener('click', () => {
-  if (STATE.playing && !mouseLocked) canvas.requestPointerLock();
+  if (STATE.playing && !mouseLocked) requestLock();
 });
 document.addEventListener('pointerlockchange', () => { mouseLocked = document.pointerLockElement === canvas; });
 
@@ -465,6 +679,86 @@ document.addEventListener('wheel', e => {
   const idx = WEAPON_ORDER.indexOf(STATE.currentWeapon);
   const next = e.deltaY > 0 ? (idx + 1) % WEAPON_ORDER.length : (idx - 1 + WEAPON_ORDER.length) % WEAPON_ORDER.length;
   switchWeapon(WEAPON_ORDER[next]);
+});
+
+// ---------- 触屏虚拟摇杆 / 视角 / 按钮 ----------
+const joyBase = document.getElementById('joy-base');
+const joyStick = document.getElementById('joy-stick');
+const lookPad = document.getElementById('look-pad');
+const JOY_R = 48;
+
+function moveJoy(e) {
+  const r = joyBase.getBoundingClientRect();
+  let dx = e.clientX - (r.left + r.width / 2);
+  let dy = e.clientY - (r.top + r.height / 2);
+  const len = Math.hypot(dx, dy);
+  if (len > JOY_R) { dx = dx / len * JOY_R; dy = dy / len * JOY_R; }
+  joyStick.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+  touchState.moveX = dx / JOY_R;
+  touchState.moveY = dy / JOY_R;
+}
+function resetJoy() {
+  touchState.moveX = 0; touchState.moveY = 0; touchState.joyId = null;
+  joyStick.style.transform = 'translate(0px, 0px)';
+}
+if (joyBase) {
+  joyBase.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    touchState.joyId = e.pointerId;
+    try { joyBase.setPointerCapture(e.pointerId); } catch (err) {}
+    moveJoy(e);
+  });
+  joyBase.addEventListener('pointermove', e => {
+    if (e.pointerId !== touchState.joyId) return;
+    e.preventDefault();
+    moveJoy(e);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => {
+    joyBase.addEventListener(ev, e => { if (e.pointerId === touchState.joyId) resetJoy(); });
+  });
+}
+if (lookPad) {
+  lookPad.addEventListener('pointerdown', e => {
+    if (e.pointerId === touchState.joyId) return;
+    touchState.lookId = e.pointerId;
+    touchState.lookX = e.clientX; touchState.lookY = e.clientY;
+    try { lookPad.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  lookPad.addEventListener('pointermove', e => {
+    if (e.pointerId !== touchState.lookId) return;
+    const sens = STATE.aiming ? 0.0022 : 0.0034;
+    player.yaw -= (e.clientX - touchState.lookX) * sens;
+    player.pitch -= (e.clientY - touchState.lookY) * sens;
+    clampPitch();
+    touchState.lookX = e.clientX; touchState.lookY = e.clientY;
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => {
+    lookPad.addEventListener(ev, e => { if (e.pointerId === touchState.lookId) touchState.lookId = null; });
+  });
+}
+const btnFire = document.getElementById('btn-fire');
+if (btnFire) {
+  btnFire.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    touchState.firing = true;
+    if (STATE.playing) shoot();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => {
+    btnFire.addEventListener(ev, () => { touchState.firing = false; });
+  });
+}
+const btnReload = document.getElementById('btn-reload');
+if (btnReload) btnReload.addEventListener('pointerdown', e => { e.preventDefault(); if (!IS_TOUCH) return; tryReload(); });
+const btnSwitch = document.getElementById('btn-switch');
+if (btnSwitch) btnSwitch.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  const idx = WEAPON_ORDER.indexOf(STATE.currentWeapon);
+  switchWeapon(WEAPON_ORDER[(idx + 1) % WEAPON_ORDER.length]);
+});
+const btnJump = document.getElementById('btn-jump');
+if (btnJump) btnJump.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (STATE.playing && player.onGround) { player.vel.y = player.jumpVel; player.onGround = false; }
 });
 
 // ---------- 碰撞 ----------
@@ -535,6 +829,14 @@ function playEnemyDie() {
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
   osc.connect(g); g.connect(audioCtx.destination); osc.start(t); osc.stop(t + 0.35);
 }
+function playEnemyShot() {
+  if (!audioCtx) return; const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator(); osc.type = 'triangle';
+  osc.frequency.setValueAtTime(900, t); osc.frequency.exponentialRampToValueAtTime(220, t + 0.14);
+  const g = audioCtx.createGain(); g.gain.setValueAtTime(0.14, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+  osc.connect(g); g.connect(audioCtx.destination); osc.start(t); osc.stop(t + 0.16);
+}
 function playExplosion() {
   if (!audioCtx) return; const t = audioCtx.currentTime;
   const bufSize = audioCtx.sampleRate * 0.5;
@@ -566,7 +868,7 @@ function playPickup() {
 function switchWeapon(w) {
   if (!WEAPONS[w] || STATE.currentWeapon === w || STATE.reloading) return;
   STATE.currentWeapon = w;
-  document.getElementById('weapon-name').textContent = WEAPONS[w].name;
+  document.getElementById('weapon-name').textContent = tName(w);
   document.getElementById('weapon-view').innerHTML = WEAPON_SVGS[w];
   document.querySelectorAll('.weapon-slot').forEach(el => {
     el.classList.toggle('active', el.dataset.w === w);
@@ -587,12 +889,17 @@ function updateCameraFov() {
 const raycaster = new THREE.Raycaster();
 function shoot() {
   const w = WEAPONS[STATE.currentWeapon];
+  const a = STATE.ammo[STATE.currentWeapon];
   const now = performance.now();
   if (now - STATE.lastShot < w.fireRate) return;
   if (STATE.reloading) return;
-  if (STATE.ammo[STATE.currentWeapon] <= 0) { tryReload(); return; }
+  if (a.mag <= 0) {
+    if (a.reserve > 0) { tryReload(); }
+    else if (now - STATE.lastShot > 400) { STATE.lastShot = now; showToast(t('outOfAmmo')); }
+    return;
+  }
   STATE.lastShot = now;
-  STATE.ammo[STATE.currentWeapon]--;
+  a.mag--;
   STATE.shotsFired++;
   updateHUD();
   playShot(STATE.currentWeapon);
@@ -666,12 +973,21 @@ function showHitMarker() {
 
 function tryReload() {
   const w = WEAPONS[STATE.currentWeapon];
-  if (STATE.reloading || STATE.ammo[STATE.currentWeapon] === w.magSize) return;
+  const a = STATE.ammo[STATE.currentWeapon];
+  if (STATE.reloading) return;
+  if (a.mag >= w.magSize) return;
+  if (a.reserve <= 0) {
+    if (STATE.playing) showToast(t('outOfAmmo'));
+    return;
+  }
   STATE.reloading = true;
   document.getElementById('reload-indicator').style.display = 'block';
   playReload();
   setTimeout(() => {
-    STATE.ammo[STATE.currentWeapon] = w.magSize;
+    const need = w.magSize - a.mag;
+    const take = Math.min(need, a.reserve);
+    a.mag += take;
+    a.reserve -= take;
     STATE.reloading = false;
     document.getElementById('reload-indicator').style.display = 'none';
     updateHUD();
@@ -758,25 +1074,29 @@ function explodeGrenade(g) {
   }
 }
 
-// ---------- 道具 ----------
+// ---------- 道具 / 弹药补给 ----------
 const PICKUP_TYPES = {
-  health: { color: 0x33ff66, label: '医疗包 +50 HP' },
-  speed:  { color: 0xffcc33, label: '加速药剂 10秒' },
-  shield: { color: 0x33aaff, label: '能量护盾 +50' },
+  health:      { color: 0x33ff66, labelKey: 'pHealth',      weight: 18 },
+  speed:       { color: 0xffcc33, labelKey: 'pSpeed',       weight: 10 },
+  shield:      { color: 0x33aaff, labelKey: 'pShield',      weight: 12 },
+  ammo_rifle:  { color: 0xff8a3d, labelKey: 'pAmmoRifle',   weight: 18, ammoFor: 'rifle',   amount: 60 },
+  ammo_pistol: { color: 0xffd34d, labelKey: 'pAmmoPistol',  weight: 14, ammoFor: 'pistol',  amount: 36 },
+  ammo_shotgun:{ color: 0x9be15d, labelKey: 'pAmmoShotgun', weight: 14, ammoFor: 'shotgun', amount: 18 },
+  ammo_sniper: { color: 0x7db4ff, labelKey: 'pAmmoSniper',  weight: 14, ammoFor: 'sniper',  amount: 10 },
 };
+const PICKUP_LIMIT = 8;
+const AMMO_PICKUPS = ['ammo_rifle', 'ammo_pistol', 'ammo_shotgun', 'ammo_sniper'];
 
-function spawnPickup() {
-  if (STATE.pickups.length >= 6) return;
-  const types = Object.keys(PICKUP_TYPES);
-  const type = types[Math.floor(Math.random() * types.length)];
-  let x, z, tries = 0;
-  do {
-    x = (Math.random() - 0.5) * 80;
-    z = (Math.random() - 0.5) * 80;
-    tries++;
-  } while ((collidesAt(x, z) || Math.hypot(x - player.pos.x, z - player.pos.z) < 8) && tries < 30);
-  if (tries >= 30) return;
+function pickPickupType() {
+  const keys = Object.keys(PICKUP_TYPES);
+  let total = 0;
+  for (const k of keys) total += PICKUP_TYPES[k].weight;
+  let r = Math.random() * total;
+  for (const k of keys) { r -= PICKUP_TYPES[k].weight; if (r <= 0) return k; }
+  return 'health';
+}
 
+function buildPickupMesh(type) {
   const info = PICKUP_TYPES[type];
   const group = new THREE.Group();
   const base = new THREE.Mesh(
@@ -785,8 +1105,28 @@ function spawnPickup() {
   );
   base.position.y = 0.075;
   group.add(base);
+
   let body;
-  if (type === 'health') {
+  if (info.ammoFor) {
+    // 弹药箱：木箱体 + 弹种色条
+    body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.42, 0.46),
+      new THREE.MeshStandardMaterial({ color: 0x2c2620, roughness: 0.75, metalness: 0.2 })
+    );
+    body.position.y = 0.62;
+    const band = new THREE.Mesh(
+      new THREE.BoxGeometry(0.72, 0.1, 0.48),
+      new THREE.MeshStandardMaterial({ color: info.color, emissive: info.color, emissiveIntensity: 0.8, roughness: 0.4 })
+    );
+    band.position.y = 0.62;
+    body.add(band);
+    const stripe = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.44, 0.48),
+      new THREE.MeshStandardMaterial({ color: info.color, emissive: info.color, emissiveIntensity: 0.35, roughness: 0.5 })
+    );
+    stripe.position.y = 0.62;
+    body.add(stripe);
+  } else if (type === 'health') {
     body = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.5, 0.15),
       new THREE.MeshStandardMaterial({ color: info.color, emissive: info.color, emissiveIntensity: 0.5, roughness: 0.3 })
@@ -812,13 +1152,50 @@ function spawnPickup() {
     body.position.y = 0.65;
   }
   group.add(body);
-  const light = new THREE.PointLight(info.color, 0.8, 4);
+  const light = new THREE.PointLight(info.color, info.ammoFor ? 1.1 : 0.8, 4);
   light.position.y = 0.8;
   group.add(light);
+  return { group, body };
+}
 
-  group.position.set(x, 0, z);
-  scene.add(group);
-  STATE.pickups.push({ mesh: group, type, body, spin: Math.random() * Math.PI * 2 });
+function placePickup(type, x, z) {
+  const built = buildPickupMesh(type);
+  built.group.position.set(x, 0, z);
+  scene.add(built.group);
+  STATE.pickups.push({ mesh: built.group, type, body: built.body, spin: Math.random() * Math.PI * 2 });
+}
+
+function spawnPickup(type) {
+  if (STATE.pickups.length >= PICKUP_LIMIT) return;
+  type = type || pickPickupType();
+  let x, z, tries = 0;
+  do {
+    x = (Math.random() - 0.5) * 80;
+    z = (Math.random() - 0.5) * 80;
+    tries++;
+  } while ((collidesAt(x, z) || Math.hypot(x - player.pos.x, z - player.pos.z) < 8) && tries < 30);
+  if (tries >= 30) return;
+  placePickup(type, x, z);
+}
+
+// 波次清空时在玩家附近投放弹药箱（保证有子弹可捡）
+function dropAmmoNearPlayer(count, preferCurrent) {
+  for (let i = 0; i < count; i++) {
+    let type;
+    if (preferCurrent && i === 0) type = 'ammo_' + STATE.currentWeapon;
+    else type = AMMO_PICKUPS[Math.floor(Math.random() * AMMO_PICKUPS.length)];
+    let x, z, tries = 0;
+    do {
+      const ang = Math.random() * Math.PI * 2;
+      const rad = 6 + Math.random() * 10;
+      x = player.pos.x + Math.cos(ang) * rad;
+      z = player.pos.z + Math.sin(ang) * rad;
+      tries++;
+    } while (collidesAt(x, z, 1) && tries < 30);
+    x = Math.max(-46, Math.min(46, x));
+    z = Math.max(-46, Math.min(46, z));
+    if (!collidesAt(x, z, 1)) placePickup(type, x, z);
+  }
 }
 
 function updatePickups(dt) {
@@ -827,7 +1204,7 @@ function updatePickups(dt) {
     p.body.rotation.y = p.spin;
     p.body.position.y = 0.6 + Math.sin(p.spin * 1.5) * 0.1;
     const dist = Math.hypot(p.mesh.position.x - player.pos.x, p.mesh.position.z - player.pos.z);
-    if (dist < 1.2) {
+    if (dist < 1.5) {
       applyPickup(p.type);
       scene.remove(p.mesh);
       p.collected = true;
@@ -838,7 +1215,14 @@ function updatePickups(dt) {
 
 function applyPickup(type) {
   playPickup();
-  showToast(PICKUP_TYPES[type].label);
+  const info = PICKUP_TYPES[type];
+  if (info && info.ammoFor) {
+    const a = STATE.ammo[info.ammoFor];
+    a.reserve += info.amount;
+    showToast(t(info.labelKey));
+  } else {
+    showToast(t(info.labelKey));
+  }
   if (type === 'health') {
     STATE.health = Math.min(STATE.maxHealth, STATE.health + 50);
   } else if (type === 'speed') {
@@ -862,10 +1246,10 @@ function updateBuffs() {
   const container = document.getElementById('buffs');
   container.innerHTML = '';
   if (STATE.buffs.speed > 0) {
-    container.innerHTML += `<div class="buff-tag speed"><span class="buff-icon"></span>加速 ${Math.ceil(STATE.buffs.speed)}s</div>`;
+    container.innerHTML += `<div class="buff-tag speed"><span class="buff-icon"></span>${t('buffSpeed')} ${Math.ceil(STATE.buffs.speed)}s</div>`;
   }
   if (STATE.buffs.shield > 0 || STATE.shield > 0) {
-    container.innerHTML += `<div class="buff-tag shield"><span class="buff-icon"></span>护盾 ${Math.ceil(STATE.shield)}</div>`;
+    container.innerHTML += `<div class="buff-tag shield"><span class="buff-icon"></span>${t('buffShield')} ${Math.ceil(STATE.shield)}</div>`;
   }
 }
 
@@ -877,14 +1261,36 @@ const enemyMatHead = new THREE.MeshStandardMaterial({ color: 0xff5555, roughness
 const enemyEyeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
 
 function spawnEnemy() {
+  // 波次越高，远程敌人占比越大（部分敌人会主动开火）
+  const rangedChance = Math.min(0.62, 0.32 + (STATE.wave - 1) * 0.05);
+  const ranged = Math.random() < rangedChance;
+
   const group = new THREE.Group();
   const body = new THREE.Mesh(enemyGeoBody, enemyMatBody.clone());
   body.position.y = 1.1; body.castShadow = true; group.add(body);
   const head = new THREE.Mesh(enemyGeoHead, enemyMatHead.clone());
   head.position.y = 2.1; head.castShadow = true; group.add(head);
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), enemyEyeMat);
+  const eyeMat = ranged ? new THREE.MeshBasicMaterial({ color: 0x66ffff }) : enemyEyeMat;
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), eyeMat);
   eyeL.position.set(-0.12, 2.15, 0.3); group.add(eyeL);
   const eyeR = eyeL.clone(); eyeR.position.x = 0.12; group.add(eyeR);
+
+  let core = null;
+  if (ranged) {
+    body.material.color.setHex(0x7a3dc0);
+    body.material.emissive.setHex(0x2a0a44);
+    head.material.color.setHex(0xc86bff);
+    // 胸口能量核心：开火前会放大，给玩家预警
+    core = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 10, 10),
+      new THREE.MeshStandardMaterial({ color: 0xff77ff, emissive: 0xff33ff, emissiveIntensity: 1.3, roughness: 0.3 })
+    );
+    core.position.set(0, 1.35, 0.48);
+    group.add(core);
+    const coreLight = new THREE.PointLight(0xff44ff, 0.7, 5);
+    coreLight.position.set(0, 1.4, 0.5);
+    group.add(coreLight);
+  }
 
   let x, z;
   do {
@@ -895,9 +1301,16 @@ function spawnEnemy() {
   group.position.set(x, 0, z);
   scene.add(group);
   const enemy = {
-    mesh: group, hp: 100, alive: true,
+    mesh: group, hp: ranged ? 80 : 100, alive: true,
     speed: 2.5 + Math.random() * 1.5 + STATE.wave * 0.2,
     damage: 8 + STATE.wave, attackCooldown: 0, attackRange: 2.2,
+    ranged: ranged, core: core,
+    fireCooldown: ranged ? 1.0 + Math.random() * 0.9 : 0,
+    fireInterval: ranged ? Math.max(1.15, 2.0 - STATE.wave * 0.07) : 0,
+    rangedDamage: Math.min(13, 6 + STATE.wave),
+    projectileSpeed: 12 + Math.min(7, STATE.wave * 1.2),
+    keepMin: 6.5, keepMax: 18,
+    hand: Math.random() < 0.5 ? 1 : -1,
   };
   group.userData.enemyRef = enemy;
   STATE.enemies.push(enemy);
@@ -907,6 +1320,14 @@ function killEnemy(enemy) {
   enemy.alive = false;
   STATE.score++;
   playEnemyDie();
+  // 击杀有概率掉落弹药箱，鼓励主动清怪补给
+  const dropChance = enemy.ranged ? 0.45 : 0.28;
+  if (Math.random() < dropChance && STATE.pickups.length < PICKUP_LIMIT) {
+    const type = Math.random() < 0.55 ? 'ammo_' + STATE.currentWeapon : AMMO_PICKUPS[Math.floor(Math.random() * AMMO_PICKUPS.length)];
+    const x = Math.max(-46, Math.min(46, enemy.mesh.position.x));
+    const z = Math.max(-46, Math.min(46, enemy.mesh.position.z));
+    if (!collidesAt(x, z, 0.6)) placePickup(type, x, z);
+  }
   const mesh = enemy.mesh;
   let rot = 0;
   const fall = setInterval(() => {
@@ -923,6 +1344,7 @@ function killEnemy(enemy) {
 }
 
 function updateEnemies(dt) {
+  const now = performance.now();
   for (const enemy of STATE.enemies) {
     if (!enemy.alive) continue;
     const mesh = enemy.mesh;
@@ -930,7 +1352,38 @@ function updateEnemies(dt) {
     const dz = player.pos.z - mesh.position.z;
     const dist = Math.hypot(dx, dz);
     mesh.rotation.y = Math.atan2(dx, dz);
-    if (dist > enemy.attackRange) {
+    if (enemy.core) enemy.core.scale.setScalar(1 + Math.sin(now * 0.008 + mesh.position.x) * 0.2);
+
+    if (enemy.ranged) {
+      // 远程单位：维持中距离，伺机开火
+      let moveDir = 0;
+      if (dist > enemy.keepMax) moveDir = 1;
+      else if (dist < enemy.keepMin) moveDir = -1;
+      if (moveDir !== 0 && dist > 0.001) {
+        const nx = dx / dist, nz = dz / dist;
+        const newX = mesh.position.x + nx * enemy.speed * 0.8 * moveDir * dt;
+        const newZ = mesh.position.z + nz * enemy.speed * 0.8 * moveDir * dt;
+        if (!collidesAt(newX, mesh.position.z, 0.5)) mesh.position.x = newX;
+        if (!collidesAt(mesh.position.x, newZ, 0.5)) mesh.position.z = newZ;
+      } else {
+        // 横向绕行，避免站桩
+        const sx = -dz / (dist || 1), sz = dx / (dist || 1);
+        const newX = mesh.position.x + sx * enemy.speed * 0.35 * dt * (enemy.hand || 1);
+        const newZ = mesh.position.z + sz * enemy.speed * 0.35 * dt * (enemy.hand || 1);
+        if (!collidesAt(newX, mesh.position.z, 0.5)) mesh.position.x = newX;
+        if (!collidesAt(mesh.position.x, newZ, 0.5)) mesh.position.z = newZ;
+      }
+      enemy.fireCooldown -= dt;
+      if (enemy.fireCooldown <= 0 && dist < 32) {
+        enemy.fireCooldown = enemy.fireInterval * (0.85 + Math.random() * 0.3);
+        fireEnemyProjectile(enemy);
+      }
+      if (dist <= enemy.attackRange) {
+        enemy.attackCooldown -= dt;
+        if (enemy.attackCooldown <= 0) { enemy.attackCooldown = 1.2; damagePlayer(enemy.damage * 0.7); }
+      }
+      mesh.position.y = Math.sin(now * 0.004 + mesh.position.x) * 0.06;
+    } else if (dist > enemy.attackRange) {
       const nx = dx / dist, nz = dz / dist;
       const newX = mesh.position.x + nx * enemy.speed * dt;
       const newZ = mesh.position.z + nz * enemy.speed * dt;
@@ -945,6 +1398,56 @@ function updateEnemies(dt) {
       }
     }
   }
+}
+
+// ---------- 敌人远程弹丸 ----------
+const enemyBulletGeo = new THREE.SphereGeometry(0.11, 8, 8);
+const enemyBulletMat = new THREE.MeshBasicMaterial({ color: 0xff66dd });
+const enemyBulletPool = [];
+
+function fireEnemyProjectile(enemy) {
+  const from = enemy.mesh.position.clone();
+  from.y = 1.35;
+  const to = player.pos.clone();
+  to.y = player.pos.y - 0.45;
+  const dir = to.sub(from);
+  if (dir.lengthSq() < 0.001) return;
+  dir.normalize();
+
+  const mesh = new THREE.Mesh(enemyBulletGeo, enemyBulletMat);
+  mesh.position.copy(from);
+  const halo = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xff33cc, transparent: true, opacity: 0.35 })
+  );
+  mesh.add(halo);
+  scene.add(mesh);
+
+  STATE.bullets.push({
+    mesh: mesh, dir: dir, speed: enemy.projectileSpeed,
+    life: 3.2, damage: enemy.rangedDamage, hit: false,
+  });
+  playEnemyShot();
+}
+
+function updateEnemyBullets(dt) {
+  for (const b of STATE.bullets) {
+    if (b.hit) continue;
+    b.mesh.position.addScaledVector(b.dir, b.speed * dt);
+    b.life -= dt;
+    const p = b.mesh.position;
+    const dh = Math.hypot(p.x - player.pos.x, p.z - player.pos.z);
+    const dy = Math.abs(p.y - (player.pos.y - 0.5));
+    if (dh < 0.7 && dy < 0.9) {
+      b.hit = true;
+      damagePlayer(b.damage);
+    }
+    if (b.life <= 0 || p.y < 0.1 || collidesAt(p.x, p.z, 0.05)) b.hit = true;
+  }
+  STATE.bullets = STATE.bullets.filter(b => {
+    if (b.hit) scene.remove(b.mesh);
+    return !b.hit;
+  });
 }
 
 // ---------- 玩家受伤 ----------
@@ -976,6 +1479,8 @@ function checkWaveComplete() {
     STATE.wave++;
     STATE.health = Math.min(STATE.health + 25, STATE.maxHealth);
     updateHUD();
+    showToast(t('waveIncoming', { n: STATE.wave }));
+    dropAmmoNearPlayer(2, true);
     setTimeout(() => spawnWave(), 2000);
   }
 }
@@ -1049,7 +1554,14 @@ function updateHUD() {
   } else {
     shieldWrap.style.display = 'none';
   }
-  document.getElementById('ammo-current').textContent = STATE.ammo[STATE.currentWeapon];
+  const a = STATE.ammo[STATE.currentWeapon];
+  const curEl = document.getElementById('ammo-current');
+  const resEl = document.getElementById('ammo-reserve');
+  curEl.textContent = a.mag;
+  resEl.textContent = a.reserve;
+  const low = a.mag === 0 && a.reserve === 0;
+  curEl.style.color = low ? '#ff4444' : '';
+  resEl.style.color = low ? '#ff4444' : (a.reserve === 0 ? '#ffaa44' : '');
   document.getElementById('score-text').textContent = STATE.score;
   document.getElementById('wave-text').textContent = STATE.wave;
 }
@@ -1070,13 +1582,21 @@ function animate() {
     const forward = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
     const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
     const move = new THREE.Vector3();
-    if (keys['KeyW']) move.add(forward);
-    if (keys['KeyS']) move.sub(forward);
-    if (keys['KeyD']) move.add(right);
-    if (keys['KeyA']) move.sub(right);
-    if (move.lengthSq() > 0) move.normalize();
+    let inF = 0, inS = 0;
+    if (keys['KeyW']) inF += 1;
+    if (keys['KeyS']) inF -= 1;
+    if (keys['KeyD']) inS += 1;
+    if (keys['KeyA']) inS -= 1;
+    inF += -touchState.moveY;
+    inS += touchState.moveX;
+    inF = Math.max(-1, Math.min(1, inF));
+    inS = Math.max(-1, Math.min(1, inS));
+    move.addScaledVector(forward, inF);
+    move.addScaledVector(right, inS);
+    if (move.lengthSq() > 1) move.normalize();
 
-    const sprint = keys['ShiftLeft'] || keys['ShiftRight'];
+    const sprint = keys['ShiftLeft'] || keys['ShiftRight'] ||
+      (touchState.joyId !== null && Math.hypot(touchState.moveX, touchState.moveY) > 0.85);
     let speed = player.speed * (sprint ? player.sprintMult : 1);
     if (STATE.buffs.speed > 0) speed *= 1.5;
     if (STATE.aiming) speed *= 0.6;
@@ -1091,7 +1611,7 @@ function animate() {
     player.pos.y += player.vel.y * dt;
     if (player.pos.y <= 1.7) { player.pos.y = 1.7; player.vel.y = 0; player.onGround = true; }
 
-    if (mouseDown && mouseLocked && WEAPONS[STATE.currentWeapon].auto) shoot();
+    if (((mouseDown && mouseLocked) || touchState.firing) && WEAPONS[STATE.currentWeapon].auto) shoot();
 
     camera.position.copy(player.pos);
     camera.rotation.order = 'YXZ';
@@ -1109,6 +1629,7 @@ function animate() {
     }
 
     updateEnemies(dt);
+    updateEnemyBullets(dt);
     updateGrenades(dt);
     updatePickups(dt);
     updateMinimap();
@@ -1125,35 +1646,52 @@ function startGame() {
   initAudio();
   STATE.playing = true;
   STATE.health = 100; STATE.shield = 0;
-  STATE.ammo = { rifle: 30, pistol: 12, shotgun: 6, sniper: 5 };
+  STATE.ammo = {
+    rifle:   { mag: 30, reserve: 30 },
+    pistol:  { mag: 12, reserve: 0 },
+    shotgun: { mag: 6,  reserve: 0 },
+    sniper:  { mag: 5,  reserve: 0 },
+  };
   STATE.currentWeapon = 'rifle';
   STATE.score = 0; STATE.wave = 1;
   STATE.shotsFired = 0; STATE.shotsHit = 0;
   STATE.reloading = false; STATE.aiming = false;
   STATE.buffs = { speed: 0, shield: 0 };
   STATE.grenades.forEach(g => scene.remove(g.mesh)); STATE.grenades = [];
+  STATE.bullets.forEach(b => scene.remove(b.mesh)); STATE.bullets = [];
   STATE.pickups.forEach(p => scene.remove(p.mesh)); STATE.pickups = [];
   STATE.enemies.forEach(e => scene.remove(e.mesh)); STATE.enemies = [];
   player.pos.set(0, 1.7, 20); player.vel.set(0, 0, 0);
   player.yaw = 0; player.pitch = 0;
+  touchState.moveX = 0; touchState.moveY = 0; touchState.firing = false;
+  if (joyStick) joyStick.style.transform = 'translate(0px, 0px)';
   document.body.classList.remove('ads', 'sniper');
   document.getElementById('weapon-view').innerHTML = WEAPON_SVGS.rifle;
-  document.getElementById('weapon-name').textContent = '突击步枪';
+  document.getElementById('weapon-name').textContent = tName('rifle');
   document.querySelectorAll('.weapon-slot').forEach(el => el.classList.toggle('active', el.dataset.w === 'rifle'));
   document.getElementById('reload-indicator').style.display = 'none';
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('game-over').style.display = 'none';
   document.getElementById('hud').style.display = 'block';
+  document.getElementById('touch-ui').style.display = IS_TOUCH ? 'block' : 'none';
   updateCameraFov();
   updateHUD();
   updateBuffs();
-  canvas.requestPointerLock();
-  setTimeout(() => { spawnWave(); spawnPickup(); spawnPickup(); }, 1000);
+  requestLock();
+  setTimeout(() => {
+    spawnWave();
+    spawnPickup();
+    spawnPickup();
+    dropAmmoNearPlayer(2, true);
+  }, 1000);
 }
 
 function gameOver() {
   STATE.playing = false;
-  document.exitPointerLock();
+  releaseLock();
+  touchState.firing = false;
+  touchState.moveX = 0; touchState.moveY = 0;
+  document.getElementById('touch-ui').style.display = 'none';
   document.body.classList.remove('ads', 'sniper');
   document.getElementById('hud').style.display = 'none';
   document.getElementById('final-kills').textContent = STATE.score;
@@ -1170,9 +1708,18 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }, 120);
 });
 
 document.getElementById('weapon-view').innerHTML = WEAPON_SVGS.rifle;
+applyLang();
 animate();
 </script>
 </body>
