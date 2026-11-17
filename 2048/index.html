@@ -105,15 +105,17 @@
     backface-visibility: hidden;
   }
   .tile.moving-none { transition: none; }
-  .tile.new { animation: pop .16s ease-out both; }
+  /* 注意：缩放必须用独立的 scale 属性，不能用 transform: scale()，
+     否则会覆盖方块定位用的 transform: translate()，方块会被甩到左上角 */
+  .tile.new { animation: pop .16s ease-out; }
   .tile.merged { animation: bump .18s ease-out; }
   @keyframes pop {
-    0% { transform: scale(.6); opacity: .4; }
-    100% { transform: scale(1); opacity: 1; }
+    0% { scale: .62; opacity: .35; }
+    100% { scale: 1; opacity: 1; }
   }
   @keyframes bump {
-    0% { filter: brightness(1.9); }
-    100% { filter: brightness(1); }
+    0% { scale: 1.13; filter: brightness(1.7); }
+    100% { scale: 1; filter: brightness(1); }
   }
 
   .bar {
@@ -327,13 +329,31 @@
     el.style.height = px(geo.cell);
     styleTile(el, value);
     place(el, x, y);
+    var tile = { id: ++tileSeq, value: value, x: x, y: y, el: el };
+    el.dataset.tid = String(tile.id);   // 用于清理游离元素
     tilesLayer.appendChild(el);
     if (!isNew) {
       // 定位完成后恢复过渡，避免这批方块此后一直“瞬移”
       void el.offsetWidth;
       requestAnimationFrame(function () { el.classList.remove('moving-none'); });
     }
-    return { id: ++tileSeq, value: value, x: x, y: y, el: el };
+    return tile;
+  }
+
+  // 兜底：删掉所有不在棋盘数据里的游离方块元素（防止历史残留变成幽灵/重影）
+  function pruneOrphans() {
+    var live = {};
+    for (var y = 0; y < SIZE; y++) {
+      for (var x = 0; x < SIZE; x++) {
+        var t = grid[y] && grid[y][x];
+        if (t) live[String(t.id)] = true;
+      }
+    }
+    var kids = Array.prototype.slice.call(tilesLayer.children);
+    for (var k = 0; k < kids.length; k++) {
+      var el = kids[k];
+      if (!live[el.dataset.tid]) tilesLayer.removeChild(el);
+    }
   }
 
   function relayoutAll() {
@@ -527,6 +547,7 @@
 
   function afterMove() {
     spawn(false);
+    pruneOrphans();
     if (!canMove()) {
       over = true;
       pendingDir = null;
