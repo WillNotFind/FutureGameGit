@@ -833,7 +833,7 @@ document.addEventListener('mousedown', e => {
   if (e.button === 2 && STATE.playing && mouseLocked) {
     STATE.aiming = true;
     document.body.classList.add('ads');
-    if (STATE.currentWeapon === 'sniper') document.body.classList.add('sniper');
+    if (STATE.currentWeapon === 'sniper' && !STATE.thirdPerson) document.body.classList.add('sniper');
     updateCameraFov();
   }
 });
@@ -1100,7 +1100,7 @@ function switchWeapon(w) {
   document.getElementById('weapon-name').textContent = tName(w);
   document.getElementById('weapon-view').innerHTML = WEAPON_SVGS[w];
   refreshWeaponSlots();
-  if (STATE.aiming && w === 'sniper') document.body.classList.add('sniper');
+  if (STATE.aiming && w === 'sniper' && !STATE.thirdPerson) document.body.classList.add('sniper');
   else document.body.classList.remove('sniper');
   updateCameraFov();
   updateHUD();
