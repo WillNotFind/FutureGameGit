@@ -140,6 +140,7 @@
     width: 260px; height: 200px;
   }
   #weapon-view svg { width: 100%; height: 100%; }
+  body.third #weapon-view, body.third #muzzle-flash { display: none !important; }
 
   /* 换弹提示 */
   #reload-indicator {
@@ -307,6 +308,7 @@
   <div id="joy-base"><div id="joy-stick"></div></div>
   <div id="touch-buttons">
     <button class="tbtn small" id="btn-ally" type="button" data-i18n="allyShort">队友</button>
+    <button class="tbtn small" id="btn-view" type="button" data-i18n="viewShort">视角</button>
     <button class="tbtn small" id="btn-grenade" type="button" data-i18n="grenadeShort">雷</button>
     <button class="tbtn small" id="btn-switch" type="button" data-i18n="switchWeapon">换枪</button>
     <button class="tbtn small" id="btn-reload" type="button" data-i18n="reload">换弹</button>
@@ -328,6 +330,7 @@
     <div><span class="key">R</span><span data-i18n="cReload">换弹</span></div>
     <div><span class="key">G</span><span data-i18n="cGrenade">手雷（长按看轨迹）</span></div>
     <div><span class="key">F</span><span data-i18n="cAlly">呼叫队友（10 积分）</span></div>
+    <div><span class="key">V</span><span data-i18n="cView">切换视角</span></div>
     <div><span class="key">1-8</span><span data-i18n="cSwitch">切换 / 购买武器</span></div>
     <div><span class="key" data-i18n="cSpaceKey">空格</span><span data-i18n="cJump">跳跃</span></div>
     <div><span class="key">Shift</span><span data-i18n="cSprint">冲刺</span></div>
@@ -384,6 +387,7 @@ const I18N = {
     noGrenade: '没有手雷 · 去场景里捡',
     bought: '已购买 {w}', needPoints: '积分不足 · 需要 {n} 积分',
     allySummoned: '队友加入 · -10 积分', allyNoPoints: '积分不足 · 队友需要 10 积分', allyMax: '队友已满（最多 3 名）',
+    cView: '切换视角', viewShort: '视角', viewThird: '第三人称视角', viewFirst: '第一人称视角', allyDown: '队友阵亡',
     buffSpeed: '加速', buffShield: '护盾',
     waveIncoming: '第 {n} 波来袭',
   },
@@ -412,6 +416,7 @@ const I18N = {
     noGrenade: 'NO GRENADES · pick one up',
     bought: 'Bought {w}', needPoints: 'Not enough points · need {n}',
     allySummoned: 'Teammate joined · -10 pts', allyNoPoints: 'Not enough points · teammate costs 10', allyMax: 'Teammates full (max 3)',
+    cView: 'Toggle view (V)', viewShort: 'VIEW', viewThird: 'Third-person view', viewFirst: 'First-person view', allyDown: 'Teammate down',
     buffSpeed: 'Speed', buffShield: 'Shield',
     waveIncoming: 'WAVE {n} INCOMING',
   }
@@ -589,6 +594,7 @@ const STATE = {
   lastGrenade: 0,
   aiming: false,
   grenadeAiming: false,
+  thirdPerson: false,
   buffs: { speed: 0, shield: 0 },
 };
 
@@ -670,6 +676,81 @@ const player = {
   speed: 6, sprintMult: 1.6, jumpVel: 7, gravity: 20,
 };
 
+// ---------- 第三人称角色模型 ----------
+const avatarBodyMat = new THREE.MeshStandardMaterial({ color: 0x34465c, roughness: 0.6, metalness: 0.25 });
+const avatarArmorMat = new THREE.MeshStandardMaterial({ color: 0x5a7084, roughness: 0.45, metalness: 0.35 });
+const avatarSkinMat = new THREE.MeshStandardMaterial({ color: 0xd9a066, roughness: 0.8 });
+const avatarVisorMat = new THREE.MeshStandardMaterial({ color: 0xff8a3d, emissive: 0xaa3311, emissiveIntensity: 0.8 });
+
+function createPlayerAvatar() {
+  const g = new THREE.Group();
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.4, 0.95, 10), avatarBodyMat);
+  torso.position.y = 1.18;
+  g.add(torso);
+  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.4, 0.3), avatarArmorMat);
+  chest.position.set(0, 1.4, -0.08);
+  g.add(chest);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), avatarSkinMat);
+  head.position.y = 1.95;
+  g.add(head);
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.62), avatarArmorMat);
+  helmet.position.y = 1.99;
+  g.add(helmet);
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.08, 0.07), avatarVisorMat);
+  visor.position.set(0, 1.98, -0.23);
+  g.add(visor);
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.85, 0.24), avatarBodyMat);
+  legL.position.set(-0.17, 0.43, 0);
+  g.add(legL);
+  const legR = legL.clone();
+  legR.position.x = 0.17;
+  g.add(legR);
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.55, 0.2), avatarArmorMat);
+  armL.position.set(-0.42, 1.28, -0.12);
+  armL.rotation.x = -0.35;
+  g.add(armL);
+  const armR = armL.clone();
+  armR.position.x = 0.42;
+  g.add(armR);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.13, 0.85), new THREE.MeshStandardMaterial({ color: 0x1b1b22, metalness: 0.5, roughness: 0.4 }));
+  gun.position.set(0.3, 1.3, -0.48);
+  g.add(gun);
+  const gunTip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.22), new THREE.MeshStandardMaterial({ color: 0x0d0d12 }));
+  gunTip.position.set(0.3, 1.3, -0.92);
+  g.add(gunTip);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  g.visible = false;
+  scene.add(g);
+  return g;
+}
+const playerAvatar = createPlayerAvatar();
+
+// 准星/射击方向：由 yaw + pitch 推导，第一/第三人称共用
+function aimDirection() {
+  const cp = Math.cos(player.pitch);
+  return new THREE.Vector3(-Math.sin(player.yaw) * cp, Math.sin(player.pitch), -Math.cos(player.yaw) * cp);
+}
+
+function applyViewMode() {
+  const tp = STATE.thirdPerson;
+  document.body.classList.toggle('third', tp);
+  if (playerAvatar) playerAvatar.visible = tp;
+  const weaponView = document.getElementById('weapon-view');
+  if (weaponView) weaponView.style.display = tp ? 'none' : '';
+  if (tp) {
+    document.body.classList.remove('sniper');
+  } else if (STATE.aiming && STATE.currentWeapon === 'sniper') {
+    document.body.classList.add('sniper');
+  }
+}
+
+function toggleView() {
+  if (!STATE.playing) return;
+  STATE.thirdPerson = !STATE.thirdPerson;
+  applyViewMode();
+  showToast(t(STATE.thirdPerson ? 'viewThird' : 'viewFirst'));
+}
+
 const keys = {};
 let mouseLocked = false;
 let mouseDown = false;
@@ -706,6 +787,7 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyR') tryReload();
   if (e.code === 'KeyG') beginGrenadeAim();
   if (e.code === 'KeyF') summonAlly();
+  if (e.code === 'KeyV') toggleView();
   if (DIGIT_WEAPON[e.code]) trySelectWeapon(DIGIT_WEAPON[e.code]);
 });
 document.addEventListener('keyup', e => {
@@ -853,6 +935,8 @@ if (btnSwitch) btnSwitch.addEventListener('pointerdown', e => {
 });
 const btnAlly = document.getElementById('btn-ally');
 if (btnAlly) btnAlly.addEventListener('pointerdown', e => { e.preventDefault(); summonAlly(); });
+const btnView = document.getElementById('btn-view');
+if (btnView) btnView.addEventListener('pointerdown', e => { e.preventDefault(); toggleView(); });
 const btnGrenade = document.getElementById('btn-grenade');
 if (btnGrenade) {
   btnGrenade.addEventListener('pointerdown', e => { e.preventDefault(); beginGrenadeAim(); });
@@ -1054,6 +1138,32 @@ function enemyChest(enemy) {
   return new THREE.Vector3(enemy.mesh.position.x, enemy.mesh.position.y + 1.35, enemy.mesh.position.z);
 }
 
+function allyChest(ally) {
+  return new THREE.Vector3(ally.mesh.position.x, ally.mesh.position.y + 1.2, ally.mesh.position.z);
+}
+
+// 敌人在玩家和存活队友中选择最近的目标
+function pickEnemyTarget(enemy) {
+  const ppos = new THREE.Vector3(player.pos.x, 0, player.pos.z);
+  let best = {
+    type: 'player',
+    ally: null,
+    pos: ppos.clone(),
+    chest: new THREE.Vector3(player.pos.x, player.pos.y - 0.35, player.pos.z),
+  };
+  let bestDist = Math.hypot(enemy.mesh.position.x - ppos.x, enemy.mesh.position.z - ppos.z);
+  for (const ally of STATE.allies) {
+    if (!ally.alive) continue;
+    const apos = new THREE.Vector3(ally.mesh.position.x, 0, ally.mesh.position.z);
+    const d = Math.hypot(enemy.mesh.position.x - apos.x, enemy.mesh.position.z - apos.z);
+    if (d < bestDist) {
+      bestDist = d;
+      best = { type: 'ally', ally: ally, pos: apos, chest: allyChest(ally) };
+    }
+  }
+  return best;
+}
+
 function damageEnemy(enemy, amount) {
   if (!enemy || !enemy.alive) return;
   enemy.hp -= amount;
@@ -1070,21 +1180,23 @@ function damageEnemy(enemy, amount) {
 function meleeAttack(w) {
   playShot('melee');
   const weaponView = document.getElementById('weapon-view');
-  weaponView.style.transition = 'transform 0.09s ease-out';
-  weaponView.style.transform = 'translate(-34px, 22px) rotate(-16deg)';
-  setTimeout(() => { weaponView.style.transition = ''; weaponView.style.transform = ''; }, 130);
+  if (!STATE.thirdPerson) {
+    weaponView.style.transition = 'transform 0.09s ease-out';
+    weaponView.style.transform = 'translate(-34px, 22px) rotate(-16deg)';
+    setTimeout(() => { weaponView.style.transition = ''; weaponView.style.transform = ''; }, 130);
+  }
 
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
+  const dir = aimDirection();
+  const eye = player.pos.clone();
   let hitAny = false;
   for (const enemy of STATE.enemies) {
     if (!enemy.alive) continue;
     const chest = enemyChest(enemy);
-    const to = chest.clone().sub(camera.position);
+    const to = chest.clone().sub(eye);
     const dist = to.length();
     if (dist > w.range) continue;
     if (to.normalize().dot(dir) < 0.35) continue;
-    if (losBlocked(camera.position, chest)) continue;
+    if (losBlocked(eye, chest)) continue;
     STATE.shotsFired++; STATE.shotsHit++;
     hitAny = true;
     damageEnemy(enemy, w.damage);
@@ -1094,8 +1206,7 @@ function meleeAttack(w) {
 }
 
 function spawnRocket(w) {
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
+  const dir = aimDirection();
   const mesh = new THREE.Mesh(
     new THREE.CylinderGeometry(0.08, 0.13, 0.7, 8),
     new THREE.MeshStandardMaterial({ color: 0x556b44, metalness: 0.5, roughness: 0.4 })
@@ -1106,7 +1217,7 @@ function spawnRocket(w) {
   );
   glow.position.y = -0.45;
   mesh.add(glow);
-  mesh.position.copy(camera.position).add(dir.clone().multiplyScalar(0.6));
+  mesh.position.copy(player.pos).add(dir.clone().multiplyScalar(0.6));
   mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
   scene.add(mesh);
   STATE.rockets.push({
@@ -1162,19 +1273,19 @@ function shoot() {
   }
 
   // 多弹丸（霰弹枪）
+  const eye = player.pos.clone();
   const spreadMult = STATE.aiming ? 0.4 : 1;
   for (let p = 0; p < w.pellets; p++) {
-    const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
+    const dir = aimDirection();
     dir.x += (Math.random() - 0.5) * w.spread * spreadMult;
     dir.y += (Math.random() - 0.5) * w.spread * spreadMult;
     dir.z += (Math.random() - 0.5) * w.spread * spreadMult;
     dir.normalize();
 
     // 墙 / 地面最先挡住子弹
-    const solid = firstSolidHit(camera.position, dir, 100);
+    const solid = firstSolidHit(eye, dir, 100);
 
-    raycaster.set(camera.position, dir);
+    raycaster.set(eye, dir);
     raycaster.far = solid ? Math.min(solid.distance, 100) : 100;
     const enemyMeshes = STATE.enemies.filter(e => e.alive).map(e => e.mesh);
     const hits = raycaster.intersectObjects(enemyMeshes, true);
@@ -1246,10 +1357,9 @@ let grenadePathLine = null;
 let grenadeLandRing = null;
 
 function grenadeLaunchState() {
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
+  const dir = aimDirection();
   return {
-    pos: camera.position.clone().add(dir.clone().multiplyScalar(1)),
+    pos: player.pos.clone().add(dir.clone().multiplyScalar(1)),
     vel: dir.clone().multiplyScalar(18).add(new THREE.Vector3(0, 4, 0)),
   };
 }
@@ -1668,7 +1778,9 @@ function updateEnemyBar(enemy) {
   c.fillStyle = 'rgba(0,0,0,0.78)';
   c.fillRect(4, 6, 120, 12);
   const ratio = Math.max(0, Math.min(1, enemy.hp / (enemy.maxHp || 100)));
-  const col = ratio > 0.6 ? '#4fd08a' : ratio > 0.3 ? '#ffcc33' : '#ff4d4d';
+  const col = enemy.isAlly
+    ? (ratio > 0.3 ? '#4db8ff' : '#ff4d4d')
+    : (ratio > 0.6 ? '#4fd08a' : ratio > 0.3 ? '#ffcc33' : '#ff4d4d');
   c.fillStyle = col;
   c.fillRect(6, 8, Math.max(0, 116 * ratio), 8);
   c.strokeStyle = 'rgba(255,255,255,0.55)';
@@ -1806,13 +1918,23 @@ function notifyPlayerShot() {
   }
 }
 
+function hitEnemyTarget(enemy, target, mult) {
+  if (!target) return;
+  if (target.type === 'ally') {
+    damageAlly(target.ally, enemy.damage * (mult || 1));
+  } else {
+    damagePlayer(enemy.damage * (mult || 1));
+  }
+}
+
 function updateEnemies(dt) {
   const now = performance.now();
   for (const enemy of STATE.enemies) {
     if (!enemy.alive) continue;
     const mesh = enemy.mesh;
-    const dx = player.pos.x - mesh.position.x;
-    const dz = player.pos.z - mesh.position.z;
+    const target = pickEnemyTarget(enemy);
+    const dx = target.pos.x - mesh.position.x;
+    const dz = target.pos.z - mesh.position.z;
     const dist = Math.hypot(dx, dz);
     const nx = dx / (dist || 1), nz = dz / (dist || 1);
     const sx = -nz, sz = nx;
@@ -1821,25 +1943,25 @@ function updateEnemies(dt) {
     if (enemy.core) enemy.core.scale.setScalar(1 + Math.sin(now * 0.008 + mesh.position.x) * 0.2);
 
     if (enemy.ranged) {
-      // 远程单位：每 0.3s 检查一次能否射到玩家
+      // 远程单位：每 0.3s 检查一次能否射到当前目标（玩家或队友）
       enemy.losTimer -= dt;
       if (enemy.losTimer <= 0) {
         enemy.losTimer = 0.3;
-        enemy.hasLos = !losBlocked(enemyChest(enemy), player.pos.clone().setY(player.pos.y - 0.5));
+        enemy.hasLos = !losBlocked(enemyChest(enemy), target.chest);
       }
 
       if (dodging) {
         // 侧向闪避
         moveEnemy(enemy, sx * enemy.speed * 1.9 * enemy.dodgeDir, sz * enemy.speed * 1.9 * enemy.dodgeDir, dt);
       } else if (!enemy.hasLos) {
-        // 射不到玩家 → 主动挪到有射界的位置（靠近 + 侧移绕开障碍）
+        // 射不到目标 → 主动挪到有射界的位置（靠近 + 侧移绕开障碍）
         moveEnemy(enemy,
           (nx * 1.05 + sx * 0.6 * enemy.hand) * enemy.speed,
           (nz * 1.05 + sz * 0.6 * enemy.hand) * enemy.speed, dt);
       } else if (dist > enemy.keepMax) {
         moveEnemy(enemy, nx * enemy.speed * 0.9, nz * enemy.speed * 0.9, dt);
       } else if (dist < enemy.keepMin) {
-        // 玩家逼近 → 后撤躲开
+        // 目标逼近 → 后撤躲开
         moveEnemy(enemy, -nx * enemy.speed * 1.1, -nz * enemy.speed * 1.1, dt);
       } else {
         // 有射界时小幅横移，别站桩
@@ -1849,11 +1971,11 @@ function updateEnemies(dt) {
       enemy.fireCooldown -= dt;
       if (enemy.fireCooldown <= 0 && dist < 32 && enemy.hasLos) {
         enemy.fireCooldown = enemy.fireInterval * (0.85 + Math.random() * 0.3);
-        fireEnemyProjectile(enemy);
+        fireEnemyProjectile(enemy, target);
       }
       if (dist <= enemy.attackRange) {
         enemy.attackCooldown -= dt;
-        if (enemy.attackCooldown <= 0) { enemy.attackCooldown = 1.2; damagePlayer(enemy.damage * 0.7); }
+        if (enemy.attackCooldown <= 0) { enemy.attackCooldown = 1.2; hitEnemyTarget(enemy, target, 0.7); }
       }
       mesh.position.y = Math.sin(now * 0.004 + mesh.position.x) * 0.06;
     } else {
@@ -1869,7 +1991,7 @@ function updateEnemies(dt) {
         enemy.attackCooldown -= dt;
         if (enemy.attackCooldown <= 0) {
           enemy.attackCooldown = 1.0;
-          damagePlayer(enemy.damage);
+          hitEnemyTarget(enemy, target, 1);
         }
       }
     }
@@ -1881,11 +2003,10 @@ const enemyBulletGeo = new THREE.SphereGeometry(0.11, 8, 8);
 const enemyBulletMat = new THREE.MeshBasicMaterial({ color: 0xff66dd });
 const enemyBulletPool = [];
 
-function fireEnemyProjectile(enemy) {
+function fireEnemyProjectile(enemy, target) {
   const from = enemy.mesh.position.clone();
   from.y = 1.35;
-  const to = player.pos.clone();
-  to.y = player.pos.y - 0.45;
+  const to = target && target.chest ? target.chest.clone() : player.pos.clone().setY(player.pos.y - 0.4);
   const dir = to.sub(from);
   if (dir.lengthSq() < 0.001) return;
   dir.normalize();
@@ -1917,6 +2038,19 @@ function updateEnemyBullets(dt) {
     if (dh < 0.7 && dy < 0.9) {
       b.hit = true;
       damagePlayer(b.damage);
+    }
+    // 敌方弹丸也能击中队友
+    if (!b.hit) {
+      for (const ally of STATE.allies) {
+        if (!ally.alive) continue;
+        const adh = Math.hypot(p.x - ally.mesh.position.x, p.z - ally.mesh.position.z);
+        const ady = Math.abs(p.y - (ally.mesh.position.y + 1.1));
+        if (adh < 0.75 && ady < 1.0) {
+          b.hit = true;
+          damageAlly(ally, b.damage);
+          break;
+        }
+      }
     }
     if (b.life <= 0 || p.y < 0.1 || collidesAt(p.x, p.z, 0.05)) b.hit = true;
   }
@@ -1959,7 +2093,12 @@ function spawnAlly() {
     Math.max(-46, Math.min(46, player.pos.z + (Math.random() - 0.5) * 4))
   );
   scene.add(group);
-  STATE.allies.push({ mesh: group, cooldown: 0.6, alive: true });
+  const bar = createEnemyBar();
+  bar.sprite.position.set(0, 2.55, 0);
+  group.add(bar.sprite);
+  const ally = { mesh: group, cooldown: 0.6, alive: true, isAlly: true, hp: 120, maxHp: 120, bar: bar };
+  STATE.allies.push(ally);
+  updateEnemyBar(ally);
 }
 
 function summonAlly() {
@@ -2028,6 +2167,32 @@ function updateAllies(dt) {
 }
 
 // ---------- 玩家受伤 ----------
+function damageAlly(ally, amount) {
+  if (!ally || !ally.alive) return;
+  ally.hp -= amount;
+  updateEnemyBar(ally);
+  if (ally.hp <= 0) killAlly(ally);
+}
+
+function killAlly(ally) {
+  if (!ally.alive) return;
+  ally.alive = false;
+  showToast(t('allyDown'));
+  const mesh = ally.mesh;
+  if (ally.bar) ally.bar.sprite.visible = false;
+  let tilt = 0;
+  const fall = setInterval(() => {
+    tilt = Math.min(Math.PI / 2, tilt + 0.12);
+    mesh.rotation.z = tilt;
+    if (tilt >= Math.PI / 2) clearInterval(fall);
+  }, 30);
+  setTimeout(() => {
+    clearInterval(fall);
+    scene.remove(mesh);
+    STATE.allies = STATE.allies.filter(a => a !== ally);
+  }, 800);
+}
+
 function damagePlayer(amount) {
   if (STATE.shield > 0) {
     const absorbed = Math.min(STATE.shield, amount * 0.7);
@@ -2202,10 +2367,30 @@ function animate() {
 
     if (((mouseDown && mouseLocked) || touchState.firing) && WEAPONS[STATE.currentWeapon].auto) shoot();
 
-    camera.position.copy(player.pos);
-    camera.rotation.order = 'YXZ';
-    camera.rotation.y = player.yaw;
-    camera.rotation.x = player.pitch;
+    playerAvatar.position.set(player.pos.x, 0, player.pos.z);
+    playerAvatar.rotation.y = player.yaw;
+    playerAvatar.visible = STATE.thirdPerson;
+
+    if (STATE.thirdPerson) {
+      // 第三人称：相机在角色后上方，遇墙自动拉近
+      const behind = new THREE.Vector3(Math.sin(player.yaw), 0, Math.cos(player.yaw)).multiplyScalar(3.8);
+      const desired = player.pos.clone().add(behind);
+      desired.y += 1.5;
+      const camDir = desired.clone().sub(player.pos);
+      const camDist = camDir.length();
+      camDir.normalize();
+      const camHit = firstSolidHit(player.pos, camDir, camDist);
+      if (camHit && camHit.distance < camDist) {
+        desired.copy(player.pos).addScaledVector(camDir, Math.max(0.6, camHit.distance - 0.3));
+      }
+      camera.position.copy(desired);
+      camera.lookAt(player.pos.clone().add(aimDirection().multiplyScalar(30)));
+    } else {
+      camera.position.copy(player.pos);
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = player.yaw;
+      camera.rotation.x = player.pitch;
+    }
 
     if (move.lengthSq() > 0 && player.onGround) {
       weaponBob += dt * (sprint ? 14 : 10);
@@ -2213,7 +2398,7 @@ function animate() {
     const bobY = Math.sin(weaponBob) * (sprint ? 8 : 5);
     const bobX = Math.cos(weaponBob * 0.5) * (sprint ? 6 : 3);
     const weaponView = document.getElementById('weapon-view');
-    if (!STATE.aiming) {
+    if (!STATE.aiming && !STATE.thirdPerson) {
       weaponView.style.transform = `translate(${bobX}px, ${bobY}px)`;
     }
 
@@ -2255,6 +2440,8 @@ function startGame() {
   STATE.score = 0; STATE.wave = 1;
   STATE.shotsFired = 0; STATE.shotsHit = 0;
   STATE.reloading = false; STATE.aiming = false; STATE.grenadeAiming = false;
+  STATE.thirdPerson = false;
+  applyViewMode();
   STATE.buffs = { speed: 0, shield: 0 };
   hideGrenadePath();
   STATE.allies.forEach(a => scene.remove(a.mesh)); STATE.allies = [];
@@ -2301,6 +2488,8 @@ function gameOver() {
   touchState.moveX = 0; touchState.moveY = 0;
   document.getElementById('touch-ui').style.display = 'none';
   document.body.classList.remove('ads', 'sniper');
+  STATE.thirdPerson = false;
+  applyViewMode();
   document.getElementById('hud').style.display = 'none';
   document.getElementById('final-kills').textContent = STATE.score;
   document.getElementById('final-wave').textContent = STATE.wave;
