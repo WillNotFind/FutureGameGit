@@ -75,13 +75,16 @@
   /* 武器切换提示 */
   #weapon-slots { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 5; }
   .weapon-slot {
-    width: 52px; height: 52px; background: rgba(10,10,20,0.55); border: 1px solid rgba(255,255,255,0.15);
+    width: 46px; height: 50px; background: rgba(10,10,20,0.55); border: 1px solid rgba(255,255,255,0.15);
     border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: 10px; color: #888; transition: all 0.15s;
+    font-size: 10px; color: #888; transition: all 0.15s; position: relative;
   }
   .weapon-slot.active { border-color: #ff6b35; background: rgba(255,107,53,0.15); color: #ff6b35; }
-  .weapon-slot .key { font-size: 14px; font-weight: 700; }
-  .weapon-slot .wname { font-size: 9px; margin-top: 2px; }
+  .weapon-slot.locked { opacity: 0.55; }
+  .weapon-slot.locked.active { opacity: 1; }
+  .weapon-slot .key { font-size: 13px; font-weight: 700; }
+  .weapon-slot .wname { font-size: 9px; margin-top: 1px; }
+  .weapon-slot .cost { position: absolute; top: -1px; right: 2px; font-size: 9px; color: #ffcc33; }
 
   /* ===== 小地图 ===== */
   #minimap-wrap {
@@ -262,11 +265,13 @@
   </div>
   <div class="hud-panel" id="hud-grenade">
     <div class="hud-label" data-i18n="grenade">手雷 [G]</div>
-    <div class="hud-value small">∞</div>
+    <div class="hud-value small"><span id="grenade-count">0</span></div>
   </div>
   <div class="hud-panel" id="hud-score">
     <div class="hud-label" data-i18n="kills">击杀</div>
     <div class="hud-value small" id="score-text">0</div>
+    <div class="hud-label" style="margin-top:6px" data-i18n="points">积分</div>
+    <div class="hud-value small" id="points-text" style="color:#ffcc33">0</div>
   </div>
   <div class="hud-panel" id="hud-wave">
     <div class="hud-label" data-i18n="wave">波次</div>
@@ -274,10 +279,14 @@
   </div>
   <div id="buffs"></div>
   <div id="weapon-slots">
-    <div class="weapon-slot active" data-w="rifle"><span class="key">1</span><span class="wname" data-i18n="wRifleShort">步枪</span></div>
-    <div class="weapon-slot" data-w="pistol"><span class="key">2</span><span class="wname" data-i18n="wPistolShort">手枪</span></div>
-    <div class="weapon-slot" data-w="shotgun"><span class="key">3</span><span class="wname" data-i18n="wShotgunShort">霰弹</span></div>
-    <div class="weapon-slot" data-w="sniper"><span class="key">4</span><span class="wname" data-i18n="wSniperShort">狙击</span></div>
+    <div class="weapon-slot active" data-w="rifle"><span class="key">1</span><span class="wname" data-i18n="wRifleShort">步枪</span><span class="cost">30</span></div>
+    <div class="weapon-slot" data-w="pistol"><span class="key">2</span><span class="wname" data-i18n="wPistolShort">手枪</span><span class="cost"></span></div>
+    <div class="weapon-slot" data-w="shotgun"><span class="key">3</span><span class="wname" data-i18n="wShotgunShort">霰弹</span><span class="cost">35</span></div>
+    <div class="weapon-slot" data-w="sniper"><span class="key">4</span><span class="wname" data-i18n="wSniperShort">狙击</span><span class="cost">60</span></div>
+    <div class="weapon-slot" data-w="smg"><span class="key">5</span><span class="wname" data-i18n="wSmgShort">冲锋</span><span class="cost">25</span></div>
+    <div class="weapon-slot" data-w="dmr"><span class="key">6</span><span class="wname" data-i18n="wDmrShort">连狙</span><span class="cost">45</span></div>
+    <div class="weapon-slot" data-w="rpg"><span class="key">7</span><span class="wname" data-i18n="wRpgShort">RPG</span><span class="cost">80</span></div>
+    <div class="weapon-slot" data-w="melee"><span class="key">8</span><span class="wname" data-i18n="wMeleeShort">刀</span><span class="cost"></span></div>
   </div>
   <div id="reload-indicator" data-i18n="reloading">换弹中...</div>
 </div>
@@ -297,6 +306,8 @@
   <div id="look-pad"></div>
   <div id="joy-base"><div id="joy-stick"></div></div>
   <div id="touch-buttons">
+    <button class="tbtn small" id="btn-ally" type="button" data-i18n="allyShort">队友</button>
+    <button class="tbtn small" id="btn-grenade" type="button" data-i18n="grenadeShort">雷</button>
     <button class="tbtn small" id="btn-switch" type="button" data-i18n="switchWeapon">换枪</button>
     <button class="tbtn small" id="btn-reload" type="button" data-i18n="reload">换弹</button>
     <button class="tbtn small" id="btn-jump" type="button" data-i18n="jump">跳</button>
@@ -315,8 +326,9 @@
     <div><span class="key" data-i18n="cLmb">左键</span><span data-i18n="cFire">射击</span></div>
     <div><span class="key" data-i18n="cRmb">右键</span><span data-i18n="cAds">瞄准</span></div>
     <div><span class="key">R</span><span data-i18n="cReload">换弹</span></div>
-    <div><span class="key">G</span><span data-i18n="cGrenade">手雷</span></div>
-    <div><span class="key">1-4</span><span data-i18n="cSwitch">切换武器</span></div>
+    <div><span class="key">G</span><span data-i18n="cGrenade">手雷（长按看轨迹）</span></div>
+    <div><span class="key">F</span><span data-i18n="cAlly">呼叫队友（10 积分）</span></div>
+    <div><span class="key">1-8</span><span data-i18n="cSwitch">切换 / 购买武器</span></div>
     <div><span class="key" data-i18n="cSpaceKey">空格</span><span data-i18n="cJump">跳跃</span></div>
     <div><span class="key">Shift</span><span data-i18n="cSprint">冲刺</span></div>
     <div><span class="key" data-i18n="cWheelKey">滚轮</span><span data-i18n="cSwitch">切换武器</span></div>
@@ -354,16 +366,24 @@ const I18N = {
     kills: '击杀', wave: '波次', reachedWave: '到达波次', accuracy: '命中率',
     reloading: '换弹中...',
     cMove: '移动', cLook: '视角', cFire: '射击', cAds: '瞄准', cReload: '换弹',
-    cGrenade: '手雷', cSwitch: '切换武器', cJump: '跳跃', cSprint: '冲刺',
+    cGrenade: '手雷（长按看轨迹）', cAlly: '呼叫队友（10 积分）', cSwitch: '切换 / 购买武器', cJump: '跳跃', cSprint: '冲刺',
     cMouseKey: '鼠标', cLmb: '左键', cRmb: '右键', cSpaceKey: '空格', cWheelKey: '滚轮',
     touchHint1: '左摇杆移动 · 右半屏拖动视角',
     touchHint2: '点「开火」射击 · 弹药靠拾取补充',
     fire: '开火', reload: '换弹', jump: '跳', switchWeapon: '换枪',
+    allyShort: '队友', grenadeShort: '雷',
+    points: '积分',
     wRifle: '突击步枪', wPistol: '手枪', wShotgun: '霰弹枪', wSniper: '狙击枪',
+    wSmg: '冲锋枪', wDmr: '连狙', wRpg: '火箭筒', wMelee: '战术刀',
     wRifleShort: '步枪', wPistolShort: '手枪', wShotgunShort: '霰弹', wSniperShort: '狙击',
+    wSmgShort: '冲锋', wDmrShort: '连狙', wRpgShort: 'RPG', wMeleeShort: '刀',
     pHealth: '医疗包 +50 HP', pSpeed: '加速药剂 10秒', pShield: '能量护盾 +50',
     pAmmoRifle: '步枪弹 +60', pAmmoPistol: '手枪弹 +36', pAmmoShotgun: '霰弹 +18', pAmmoSniper: '狙击弹 +10',
+    pAmmoSmg: '冲锋枪弹 +60', pAmmoDmr: '连狙弹 +30', pAmmoRpg: '火箭弹 +2', pGrenade: '手雷 +1',
     outOfAmmo: '没有弹药了 · 去找弹药箱',
+    noGrenade: '没有手雷 · 去场景里捡',
+    bought: '已购买 {w}', needPoints: '积分不足 · 需要 {n} 积分',
+    allySummoned: '队友加入 · -10 积分', allyNoPoints: '积分不足 · 队友需要 10 积分', allyMax: '队友已满（最多 3 名）',
     buffSpeed: '加速', buffShield: '护盾',
     waveIncoming: '第 {n} 波来袭',
   },
@@ -374,16 +394,24 @@ const I18N = {
     kills: 'KILLS', wave: 'WAVE', reachedWave: 'WAVE REACHED', accuracy: 'ACCURACY',
     reloading: 'RELOADING...',
     cMove: 'Move', cLook: 'Aim', cFire: 'Fire', cAds: 'ADS', cReload: 'Reload',
-    cGrenade: 'Grenade', cSwitch: 'Switch weapon', cJump: 'Jump', cSprint: 'Sprint',
+    cGrenade: 'Grenade (hold to preview)', cAlly: 'Call teammate (10 pts)', cSwitch: 'Switch / buy weapon', cJump: 'Jump', cSprint: 'Sprint',
     cMouseKey: 'Mouse', cLmb: 'LMB', cRmb: 'RMB', cSpaceKey: 'Space', cWheelKey: 'Wheel',
     touchHint1: 'Left stick moves · drag right half to look',
     touchHint2: 'Tap FIRE to shoot · ammo only from pickups',
     fire: 'FIRE', reload: 'RELOAD', jump: 'JUMP', switchWeapon: 'SWAP',
+    allyShort: 'ALLY', grenadeShort: 'NADE',
+    points: 'POINTS',
     wRifle: 'Assault Rifle', wPistol: 'Pistol', wShotgun: 'Shotgun', wSniper: 'Sniper Rifle',
+    wSmg: 'SMG', wDmr: 'DMR', wRpg: 'RPG', wMelee: 'Combat Knife',
     wRifleShort: 'RIFLE', wPistolShort: 'PISTOL', wShotgunShort: 'SHOTGUN', wSniperShort: 'SNIPER',
+    wSmgShort: 'SMG', wDmrShort: 'DMR', wRpgShort: 'RPG', wMeleeShort: 'KNIFE',
     pHealth: 'Med kit +50 HP', pSpeed: 'Speed boost 10s', pShield: 'Shield +50',
     pAmmoRifle: 'Rifle ammo +60', pAmmoPistol: 'Pistol ammo +36', pAmmoShotgun: 'Shells +18', pAmmoSniper: 'Sniper ammo +10',
+    pAmmoSmg: 'SMG ammo +60', pAmmoDmr: 'DMR ammo +30', pAmmoRpg: 'Rocket +2', pGrenade: 'Grenade +1',
     outOfAmmo: 'OUT OF AMMO · find an ammo crate',
+    noGrenade: 'NO GRENADES · pick one up',
+    bought: 'Bought {w}', needPoints: 'Not enough points · need {n}',
+    allySummoned: 'Teammate joined · -10 pts', allyNoPoints: 'Not enough points · teammate costs 10', allyMax: 'Teammates full (max 3)',
     buffSpeed: 'Speed', buffShield: 'Shield',
     waveIncoming: 'WAVE {n} INCOMING',
   }
@@ -420,12 +448,18 @@ document.getElementById('lang-tab').addEventListener('click', toggleLang);
 
 // ---------- 武器定义 ----------
 const WEAPONS = {
-  rifle:   { name: '突击步枪', damage: 25,  fireRate: 120, magSize: 30, reloadTime: 1200, auto: true,  spread: 0.020, pellets: 1, zoomFov: 50 },
-  pistol:  { name: '手枪',     damage: 45,  fireRate: 280, magSize: 12, reloadTime: 900,  auto: false, spread: 0.010, pellets: 1, zoomFov: 55 },
-  shotgun: { name: '霰弹枪',   damage: 14,  fireRate: 750, magSize: 6,  reloadTime: 1700, auto: false, spread: 0.090, pellets: 8, zoomFov: 60 },
-  sniper:  { name: '狙击枪',   damage: 130, fireRate: 1100,magSize: 5,  reloadTime: 2000, auto: false, spread: 0.001, pellets: 1, zoomFov: 18 },
+  rifle:   { name: '突击步枪', damage: 25,  fireRate: 120, magSize: 30, reloadTime: 1200, auto: true,  spread: 0.020, pellets: 1, zoomFov: 50, cost: 30, reserveStart: 90 },
+  pistol:  { name: '手枪',     damage: 45,  fireRate: 280, magSize: 12, reloadTime: 900,  auto: false, spread: 0.010, pellets: 1, zoomFov: 55, cost: 0,  reserveStart: 24 },
+  shotgun: { name: '霰弹枪',   damage: 14,  fireRate: 750, magSize: 6,  reloadTime: 1700, auto: false, spread: 0.090, pellets: 8, zoomFov: 60, cost: 35, reserveStart: 18 },
+  sniper:  { name: '狙击枪',   damage: 130, fireRate: 1100,magSize: 5,  reloadTime: 2000, auto: false, spread: 0.001, pellets: 1, zoomFov: 18, cost: 60, reserveStart: 10 },
+  smg:     { name: '冲锋枪',   damage: 16,  fireRate: 75,  magSize: 35, reloadTime: 1300, auto: true,  spread: 0.035, pellets: 1, zoomFov: 55, cost: 25, reserveStart: 105 },
+  dmr:     { name: '连狙',     damage: 85,  fireRate: 380, magSize: 10, reloadTime: 1500, auto: true,  spread: 0.008, pellets: 1, zoomFov: 30, cost: 45, reserveStart: 40 },
+  rpg:     { name: '火箭筒',   damage: 120, fireRate: 900, magSize: 1,  reloadTime: 2200, auto: false, spread: 0.004, pellets: 1, zoomFov: 60, cost: 80, reserveStart: 2, explosive: 5 },
+  melee:   { name: '战术刀',   damage: 60,  fireRate: 520, magSize: 0,  reloadTime: 0,    auto: false, spread: 0.000, pellets: 1, zoomFov: 75, cost: 0,  reserveStart: 0, melee: true, range: 2.8 },
 };
-const WEAPON_ORDER = ['rifle', 'pistol', 'shotgun', 'sniper'];
+const WEAPON_ORDER = ['rifle', 'pistol', 'shotgun', 'sniper', 'smg', 'dmr', 'rpg', 'melee'];
+const WEAPON_COSTS = {};
+WEAPON_ORDER.forEach(w => { WEAPON_COSTS[w] = WEAPONS[w].cost; });
 
 // ---------- 武器 SVG 视图 ----------
 const WEAPON_SVGS = {
@@ -476,6 +510,47 @@ const WEAPON_SVGS = {
     <rect x="200" y="138" width="20" height="14" rx="2" fill="#222"/>
     <line x1="55" y1="124" x2="220" y2="124" stroke="#345" stroke-width="0.5"/>
   </svg>`,
+  smg: `<svg viewBox="0 0 320 240" width="320" height="240">
+    <rect x="95" y="108" width="150" height="34" rx="5" fill="#2a2a35" stroke="#444" stroke-width="1"/>
+    <rect x="235" y="112" width="55" height="14" rx="2" fill="#1a1a22"/>
+    <rect x="286" y="108" width="14" height="22" rx="2" fill="#111"/>
+    <rect x="140" y="142" width="26" height="62" rx="3" fill="#33333f" transform="rotate(-6 153 142)"/>
+    <rect x="112" y="142" width="26" height="56" rx="4" fill="#252530" transform="rotate(10 125 142)"/>
+    <rect x="180" y="140" width="22" height="78" rx="3" fill="#1e1e28"/>
+    <rect x="120" y="92" width="70" height="16" rx="3" fill="#1e1e28"/>
+    <circle cx="128" cy="118" r="4" fill="#0a0a12" stroke="#555" stroke-width="1"/>
+    <line x1="100" y1="120" x2="240" y2="120" stroke="#444" stroke-width="0.5"/>
+  </svg>`,
+  dmr: `<svg viewBox="0 0 320 240" width="320" height="240">
+    <rect x="60" y="110" width="190" height="30" rx="4" fill="#26302a" stroke="#3a4" stroke-width="1"/>
+    <rect x="230" y="114" width="70" height="12" rx="2" fill="#111"/>
+    <rect x="292" y="110" width="16" height="20" rx="2" fill="#0a0a0a"/>
+    <rect x="95" y="84" width="90" height="22" rx="5" fill="#111" stroke="#333" stroke-width="1"/>
+    <circle cx="118" cy="95" r="8" fill="#0a0a12" stroke="#555" stroke-width="1.5"/>
+    <circle cx="165" cy="95" r="8" fill="#0a0a12" stroke="#555" stroke-width="1.5"/>
+    <rect x="105" y="138" width="28" height="56" rx="3" fill="#2a2a2a" transform="rotate(-8 119 138)"/>
+    <rect x="72" y="138" width="30" height="58" rx="4" fill="#1f2a1f" transform="rotate(12 87 138)"/>
+    <rect x="195" y="138" width="30" height="16" rx="2" fill="#222"/>
+    <line x1="62" y1="123" x2="228" y2="123" stroke="#3a4" stroke-width="0.5"/>
+  </svg>`,
+  rpg: `<svg viewBox="0 0 320 240" width="320" height="240">
+    <rect x="50" y="104" width="230" height="42" rx="18" fill="#2c3a2a" stroke="#4a5" stroke-width="1"/>
+    <rect x="276" y="98" width="28" height="54" rx="10" fill="#1a241a"/>
+    <rect x="120" y="120" width="40" height="70" rx="5" fill="#222a22" transform="rotate(-6 140 120)"/>
+    <rect x="90" y="120" width="26" height="58" rx="4" fill="#1a221a" transform="rotate(10 103 120)"/>
+    <rect x="150" y="118" width="46" height="18" rx="3" fill="#333"/>
+    <circle cx="172" cy="98" r="7" fill="#0a0a12" stroke="#666" stroke-width="1"/>
+    <path d="M 100 126 Q 100 152 116 152 L 121 126" fill="none" stroke="#333" stroke-width="4"/>
+    <rect x="250" y="88" width="34" height="10" rx="2" fill="#3a3a3a"/>
+    <line x1="55" y1="116" x2="270" y2="116" stroke="#4a5" stroke-width="0.6"/>
+  </svg>`,
+  melee: `<svg viewBox="0 0 320 240" width="320" height="240">
+    <path d="M 40 200 L 250 40 L 262 52 L 60 212 Z" fill="#8a8f99" stroke="#c9ced6" stroke-width="2"/>
+    <path d="M 250 40 L 262 52 L 240 74 L 228 62 Z" fill="#b9bec8"/>
+    <rect x="55" y="196" width="60" height="26" rx="8" fill="#2a2a30" transform="rotate(-38 85 209)"/>
+    <rect x="120" y="150" width="18" height="18" rx="3" fill="#333" transform="rotate(-38 129 159)"/>
+    <line x1="70" y1="204" x2="248" y2="46" stroke="#dfe4ec" stroke-width="0.8"/>
+  </svg>`,
 };
 
 // ---------- 全局状态 ----------
@@ -486,24 +561,34 @@ const STATE = {
   shield: 0,
   maxShield: 50,
   ammo: {
-    rifle:   { mag: 30, reserve: 30 },
-    pistol:  { mag: 12, reserve: 0 },
-    shotgun: { mag: 6,  reserve: 0 },
-    sniper:  { mag: 5,  reserve: 0 },
+    rifle:   { mag: 0, reserve: 0 },
+    pistol:  { mag: 12, reserve: 24 },
+    shotgun: { mag: 0, reserve: 0 },
+    sniper:  { mag: 0, reserve: 0 },
+    smg:     { mag: 0, reserve: 0 },
+    dmr:     { mag: 0, reserve: 0 },
+    rpg:     { mag: 0, reserve: 0 },
+    melee:   { mag: 0, reserve: 0 },
   },
-  currentWeapon: 'rifle',
+  currentWeapon: 'pistol',
+  owned: ['pistol', 'melee'],
+  points: 40,
+  grenadeCount: 0,
   score: 0,
   wave: 1,
   shotsFired: 0,
   shotsHit: 0,
   reloading: false,
   enemies: [],
+  allies: [],
   bullets: [],
+  rockets: [],
   grenades: [],
   pickups: [],
   lastShot: 0,
   lastGrenade: 0,
   aiming: false,
+  grenadeAiming: false,
   buffs: { speed: 0, shield: 0 },
 };
 
@@ -610,16 +695,23 @@ function clampPitch() {
   player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
 }
 
+const DIGIT_WEAPON = {
+  Digit1: 'rifle', Digit2: 'pistol', Digit3: 'shotgun', Digit4: 'sniper',
+  Digit5: 'smg', Digit6: 'dmr', Digit7: 'rpg', Digit8: 'melee',
+};
+
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
+  if (e.repeat) return;
   if (e.code === 'KeyR') tryReload();
-  if (e.code === 'KeyG') throwGrenade();
-  if (e.code === 'Digit1') switchWeapon('rifle');
-  if (e.code === 'Digit2') switchWeapon('pistol');
-  if (e.code === 'Digit3') switchWeapon('shotgun');
-  if (e.code === 'Digit4') switchWeapon('sniper');
+  if (e.code === 'KeyG') beginGrenadeAim();
+  if (e.code === 'KeyF') summonAlly();
+  if (DIGIT_WEAPON[e.code]) trySelectWeapon(DIGIT_WEAPON[e.code]);
 });
-document.addEventListener('keyup', e => { keys[e.code] = false; });
+document.addEventListener('keyup', e => {
+  keys[e.code] = false;
+  if (e.code === 'KeyG') endGrenadeAim(true);
+});
 
 document.addEventListener('mousemove', e => {
   if (!mouseLocked) return;
@@ -673,12 +765,14 @@ document.addEventListener('mouseup', e => {
 });
 document.addEventListener('contextmenu', e => e.preventDefault());
 
-// 滚轮切换武器
+// 滚轮切换武器（只轮换已拥有的武器）
 document.addEventListener('wheel', e => {
   if (!STATE.playing || !mouseLocked) return;
-  const idx = WEAPON_ORDER.indexOf(STATE.currentWeapon);
-  const next = e.deltaY > 0 ? (idx + 1) % WEAPON_ORDER.length : (idx - 1 + WEAPON_ORDER.length) % WEAPON_ORDER.length;
-  switchWeapon(WEAPON_ORDER[next]);
+  const list = WEAPON_ORDER.filter(w => STATE.owned.indexOf(w) >= 0);
+  if (!list.length) return;
+  const idx = list.indexOf(STATE.currentWeapon);
+  const next = e.deltaY > 0 ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
+  switchWeapon(list[next]);
 });
 
 // ---------- 触屏虚拟摇杆 / 视角 / 按钮 ----------
@@ -752,9 +846,20 @@ if (btnReload) btnReload.addEventListener('pointerdown', e => { e.preventDefault
 const btnSwitch = document.getElementById('btn-switch');
 if (btnSwitch) btnSwitch.addEventListener('pointerdown', e => {
   e.preventDefault();
-  const idx = WEAPON_ORDER.indexOf(STATE.currentWeapon);
-  switchWeapon(WEAPON_ORDER[(idx + 1) % WEAPON_ORDER.length]);
+  const list = WEAPON_ORDER.filter(w => STATE.owned.indexOf(w) >= 0);
+  if (!list.length) return;
+  const idx = list.indexOf(STATE.currentWeapon);
+  switchWeapon(list[(idx + 1) % list.length]);
 });
+const btnAlly = document.getElementById('btn-ally');
+if (btnAlly) btnAlly.addEventListener('pointerdown', e => { e.preventDefault(); summonAlly(); });
+const btnGrenade = document.getElementById('btn-grenade');
+if (btnGrenade) {
+  btnGrenade.addEventListener('pointerdown', e => { e.preventDefault(); beginGrenadeAim(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => {
+    btnGrenade.addEventListener(ev, e => { e.preventDefault(); endGrenadeAim(true); });
+  });
+}
 const btnJump = document.getElementById('btn-jump');
 if (btnJump) btnJump.addEventListener('pointerdown', e => {
   e.preventDefault();
@@ -864,15 +969,53 @@ function playPickup() {
   });
 }
 
-// ---------- 武器切换 ----------
+// ---------- 武器切换 / 购买 ----------
+function refreshWeaponSlots() {
+  const slots = document.querySelectorAll('.weapon-slot');
+  for (let i = 0; i < slots.length; i++) {
+    const el = slots[i];
+    const w = el.dataset.w;
+    const owned = STATE.owned.indexOf(w) >= 0;
+    el.classList.toggle('active', w === STATE.currentWeapon);
+    el.classList.toggle('locked', !owned);
+    const costEl = el.querySelector('.cost');
+    if (costEl) costEl.textContent = owned ? '' : String(WEAPON_COSTS[w] || 0);
+  }
+}
+
+function grantWeaponAmmo(w) {
+  const def = WEAPONS[w];
+  if (!def || def.melee) return;
+  STATE.ammo[w].mag = def.magSize;
+  STATE.ammo[w].reserve = Math.max(STATE.ammo[w].reserve, def.reserveStart);
+}
+
+// 数字键：未拥有的枪械先扣积分购买，手枪与近战刀免费
+function trySelectWeapon(w) {
+  if (!WEAPONS[w] || !STATE.playing) return;
+  if (STATE.owned.indexOf(w) < 0) {
+    const cost = WEAPON_COSTS[w] || 0;
+    if (STATE.points >= cost) {
+      STATE.points -= cost;
+      STATE.owned.push(w);
+      grantWeaponAmmo(w);
+      showToast(t('bought', { w: tName(w) }));
+      updateHUD();
+    } else {
+      showToast(t('needPoints', { n: cost }));
+      return;
+    }
+  }
+  switchWeapon(w);
+}
+
 function switchWeapon(w) {
   if (!WEAPONS[w] || STATE.currentWeapon === w || STATE.reloading) return;
+  if (STATE.owned.indexOf(w) < 0) return;
   STATE.currentWeapon = w;
   document.getElementById('weapon-name').textContent = tName(w);
   document.getElementById('weapon-view').innerHTML = WEAPON_SVGS[w];
-  document.querySelectorAll('.weapon-slot').forEach(el => {
-    el.classList.toggle('active', el.dataset.w === w);
-  });
+  refreshWeaponSlots();
   if (STATE.aiming && w === 'sniper') document.body.classList.add('sniper');
   else document.body.classList.remove('sniper');
   updateCameraFov();
@@ -887,22 +1030,115 @@ function updateCameraFov() {
 
 // ---------- 射击 ----------
 const raycaster = new THREE.Raycaster();
+
+// 命中的最近实体（墙/地面），用于阻止子弹穿墙
+function firstSolidHit(origin, dir, far) {
+  raycaster.set(origin, dir);
+  raycaster.far = far || 100;
+  const meshes = obstacles.map(o => o.mesh).concat([ground]);
+  const hits = raycaster.intersectObjects(meshes, false);
+  return hits.length ? hits[0] : null;
+}
+
+// 两点之间是否被墙挡住（敌人 AI / 近战判定共用）
+function losBlocked(from, to) {
+  const dir = to.clone().sub(from);
+  const dist = dir.length();
+  if (dist < 0.01) return false;
+  dir.normalize();
+  const hit = firstSolidHit(from, dir, dist);
+  return !!hit && hit.distance < dist - 0.25;
+}
+
+function enemyChest(enemy) {
+  return new THREE.Vector3(enemy.mesh.position.x, enemy.mesh.position.y + 1.35, enemy.mesh.position.z);
+}
+
+function damageEnemy(enemy, amount) {
+  if (!enemy || !enemy.alive) return;
+  enemy.hp -= amount;
+  updateEnemyBar(enemy);
+  enemy.mesh.traverse(c => {
+    if (c.isMesh && c.material && c.material.emissive) {
+      c.material.emissive.setHex(0xff4444);
+      setTimeout(() => { if (c.material && c.material.emissive) c.material.emissive.setHex(0x000000); }, 80);
+    }
+  });
+  if (enemy.hp <= 0) killEnemy(enemy);
+}
+
+function meleeAttack(w) {
+  playShot('melee');
+  const weaponView = document.getElementById('weapon-view');
+  weaponView.style.transition = 'transform 0.09s ease-out';
+  weaponView.style.transform = 'translate(-34px, 22px) rotate(-16deg)';
+  setTimeout(() => { weaponView.style.transition = ''; weaponView.style.transform = ''; }, 130);
+
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  let hitAny = false;
+  for (const enemy of STATE.enemies) {
+    if (!enemy.alive) continue;
+    const chest = enemyChest(enemy);
+    const to = chest.clone().sub(camera.position);
+    const dist = to.length();
+    if (dist > w.range) continue;
+    if (to.normalize().dot(dir) < 0.35) continue;
+    if (losBlocked(camera.position, chest)) continue;
+    STATE.shotsFired++; STATE.shotsHit++;
+    hitAny = true;
+    damageEnemy(enemy, w.damage);
+  }
+  if (hitAny) { playHit(); showHitMarker(); }
+  notifyPlayerShot();
+}
+
+function spawnRocket(w) {
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.13, 0.7, 8),
+    new THREE.MeshStandardMaterial({ color: 0x556b44, metalness: 0.5, roughness: 0.4 })
+  );
+  const glow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.16, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffaa33 })
+  );
+  glow.position.y = -0.45;
+  mesh.add(glow);
+  mesh.position.copy(camera.position).add(dir.clone().multiplyScalar(0.6));
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  scene.add(mesh);
+  STATE.rockets.push({
+    mesh: mesh, dir: dir.clone(), speed: 26, life: 4,
+    damage: w.damage, radius: w.explosive || 5, alive: true,
+  });
+}
+
 function shoot() {
+  if (!STATE.playing) return;
   const w = WEAPONS[STATE.currentWeapon];
   const a = STATE.ammo[STATE.currentWeapon];
   const now = performance.now();
   if (now - STATE.lastShot < w.fireRate) return;
   if (STATE.reloading) return;
+
+  if (w.melee) {
+    STATE.lastShot = now;
+    meleeAttack(w);
+    return;
+  }
+
   if (a.mag <= 0) {
-    if (a.reserve > 0) { tryReload(); }
+    if (a.reserve > 0) tryReload();
     else if (now - STATE.lastShot > 400) { STATE.lastShot = now; showToast(t('outOfAmmo')); }
     return;
   }
   STATE.lastShot = now;
   a.mag--;
   STATE.shotsFired++;
-  updateHUD();
   playShot(STATE.currentWeapon);
+  notifyPlayerShot();
 
   // 枪口火焰
   const flash = document.getElementById('muzzle-flash');
@@ -910,9 +1146,20 @@ function shoot() {
   setTimeout(() => { flash.style.opacity = '0'; }, 50);
 
   // 后坐力
-  const recoil = STATE.currentWeapon === 'sniper' ? 0.03 : STATE.currentWeapon === 'shotgun' ? 0.04 : 0.012;
+  const recoil = STATE.currentWeapon === 'sniper' ? 0.03 : STATE.currentWeapon === 'shotgun' ? 0.04 :
+                 STATE.currentWeapon === 'rpg' ? 0.05 : STATE.currentWeapon === 'dmr' ? 0.02 : 0.012;
   player.pitch += recoil + Math.random() * 0.008;
   player.yaw += (Math.random() - 0.5) * 0.008;
+
+  // 打空自动换弹（不再等下一次开火）
+  if (a.mag === 0 && a.reserve > 0) tryReload();
+
+  // 火箭弹
+  if (w.explosive) {
+    spawnRocket(w);
+    updateHUD();
+    return;
+  }
 
   // 多弹丸（霰弹枪）
   const spreadMult = STATE.aiming ? 0.4 : 1;
@@ -924,9 +1171,11 @@ function shoot() {
     dir.z += (Math.random() - 0.5) * w.spread * spreadMult;
     dir.normalize();
 
-    raycaster.set(camera.position, dir);
-    raycaster.far = 100;
+    // 墙 / 地面最先挡住子弹
+    const solid = firstSolidHit(camera.position, dir, 100);
 
+    raycaster.set(camera.position, dir);
+    raycaster.far = solid ? Math.min(solid.distance, 100) : 100;
     const enemyMeshes = STATE.enemies.filter(e => e.alive).map(e => e.mesh);
     const hits = raycaster.intersectObjects(enemyMeshes, true);
 
@@ -935,34 +1184,29 @@ function shoot() {
       while (obj && !obj.userData.enemyRef) obj = obj.parent;
       if (obj && obj.userData.enemyRef) {
         const enemy = obj.userData.enemyRef;
-        STATE.shotsHit++;
-        enemy.hp -= w.damage;
-        playHit();
-        showHitMarker();
-        enemy.mesh.traverse(c => {
-          if (c.isMesh && c.material.emissive) {
-            c.material.emissive.setHex(0xff4444);
-            setTimeout(() => c.material.emissive.setHex(0x000000), 80);
-          }
-        });
-        if (enemy.hp <= 0) killEnemy(enemy);
+        if (enemy.alive) {
+          STATE.shotsHit++;
+          playHit();
+          showHitMarker();
+          damageEnemy(enemy, w.damage);
+        }
       }
     }
 
-    // 弹孔
-    const allHits = raycaster.intersectObjects(obstacles.map(o => o.mesh).concat([ground]));
-    if (allHits.length > 0 && (!hits.length || allHits[0].distance < hits[0].distance)) {
-      const pt = allHits[0].point;
+    // 弹孔（只有墙比敌人更近才留孔，弹孔不会穿过敌人）
+    if (solid) {
+      const pt = solid.point;
       const hole = new THREE.Mesh(
         new THREE.CircleGeometry(0.08, 8),
         new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide })
       );
-      hole.position.copy(pt).add(allHits[0].face.normal.clone().multiplyScalar(0.01));
-      hole.lookAt(pt.clone().add(allHits[0].face.normal));
+      hole.position.copy(pt).add(solid.face.normal.clone().multiplyScalar(0.01));
+      hole.lookAt(pt.clone().add(solid.face.normal));
       scene.add(hole);
       setTimeout(() => scene.remove(hole), 8000);
     }
   }
+  updateHUD();
 }
 
 function showHitMarker() {
@@ -974,6 +1218,7 @@ function showHitMarker() {
 function tryReload() {
   const w = WEAPONS[STATE.currentWeapon];
   const a = STATE.ammo[STATE.currentWeapon];
+  if (!w || w.melee || w.magSize === 0) return;
   if (STATE.reloading) return;
   if (a.mag >= w.magSize) return;
   if (a.reserve <= 0) {
@@ -994,20 +1239,115 @@ function tryReload() {
   }, w.reloadTime);
 }
 
-// ---------- 手雷 ----------
+// ---------- 手雷（必须拾取，长按显示抛物线轨迹） ----------
 const grenadeGeo = new THREE.SphereGeometry(0.12, 8, 8);
 const grenadeMat = new THREE.MeshStandardMaterial({ color: 0x3a5a2a, roughness: 0.6, metalness: 0.4 });
+let grenadePathLine = null;
+let grenadeLandRing = null;
+
+function grenadeLaunchState() {
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  return {
+    pos: camera.position.clone().add(dir.clone().multiplyScalar(1)),
+    vel: dir.clone().multiplyScalar(18).add(new THREE.Vector3(0, 4, 0)),
+  };
+}
+
+function computeGrenadeTrajectory() {
+  const st = grenadeLaunchState();
+  const pos = st.pos.clone();
+  const vel = st.vel.clone();
+  const pts = [pos.clone()];
+  const step = 0.06;
+  let land = null;
+  for (let time = 0; time < 2.0; time += step) {
+    vel.y -= 25 * step;
+    const next = pos.clone().add(vel.clone().multiplyScalar(step));
+    if (next.y < 0.12) {
+      next.y = 0.12;
+      land = next.clone();
+      pts.push(next.clone());
+      break;
+    }
+    const dir = next.clone().sub(pos);
+    const len = dir.length();
+    const hit = firstSolidHit(pos, dir.normalize(), len);
+    if (hit && hit.distance < len - 0.05) {
+      land = hit.point.clone();
+      pts.push(land);
+      break;
+    }
+    pos.copy(next);
+    pts.push(pos.clone());
+  }
+  if (!land) land = pts[pts.length - 1].clone();
+  return { pts: pts, land: land };
+}
+
+function ensureGrenadePath() {
+  if (!grenadePathLine) {
+    const geo = new THREE.BufferGeometry();
+    geo.setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1)]);
+    grenadePathLine = new THREE.Line(geo, new THREE.LineBasicMaterial({
+      color: 0xffaa33, transparent: true, opacity: 0.85, depthTest: false,
+    }));
+    grenadePathLine.frustumCulled = false;
+    grenadePathLine.renderOrder = 90;
+    scene.add(grenadePathLine);
+  }
+  if (!grenadeLandRing) {
+    grenadeLandRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.22, 0.36, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffaa33, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthTest: false })
+    );
+    grenadeLandRing.rotation.x = -Math.PI / 2;
+    grenadeLandRing.renderOrder = 91;
+    scene.add(grenadeLandRing);
+  }
+  grenadePathLine.visible = true;
+  grenadeLandRing.visible = true;
+}
+
+function hideGrenadePath() {
+  if (grenadePathLine) grenadePathLine.visible = false;
+  if (grenadeLandRing) grenadeLandRing.visible = false;
+}
+
+function updateGrenadePathPreview() {
+  if (!STATE.grenadeAiming || !grenadePathLine) return;
+  const tr = computeGrenadeTrajectory();
+  grenadePathLine.geometry.setFromPoints(tr.pts);
+  grenadeLandRing.position.copy(tr.land);
+  grenadeLandRing.position.y = Math.max(0.03, tr.land.y + 0.02);
+}
+
+function beginGrenadeAim() {
+  if (!STATE.playing) return;
+  if (STATE.grenadeCount <= 0) { showToast(t('noGrenade')); return; }
+  STATE.grenadeAiming = true;
+  ensureGrenadePath();
+}
+
+function endGrenadeAim(shouldThrow) {
+  if (!STATE.grenadeAiming) return;
+  STATE.grenadeAiming = false;
+  hideGrenadePath();
+  if (shouldThrow && STATE.playing) throwGrenade();
+}
 
 function throwGrenade() {
+  if (!STATE.playing) return;
+  if (STATE.grenadeCount <= 0) { showToast(t('noGrenade')); return; }
   const now = performance.now();
   if (now - STATE.lastGrenade < 600) return;
   STATE.lastGrenade = now;
-  const dir = new THREE.Vector3();
-  camera.getWorldDirection(dir);
+  STATE.grenadeCount--;
+  const st = grenadeLaunchState();
   const grenade = {
     mesh: new THREE.Mesh(grenadeGeo, grenadeMat),
-    vel: dir.clone().multiplyScalar(18).add(new THREE.Vector3(0, 4, 0)),
-    pos: camera.position.clone().add(dir.clone().multiplyScalar(1)),
+    vel: st.vel,
+    pos: st.pos,
     fuse: 2.0,
     alive: true,
   };
@@ -1015,6 +1355,7 @@ function throwGrenade() {
   grenade.mesh.castShadow = true;
   scene.add(grenade.mesh);
   STATE.grenades.push(grenade);
+  updateHUD();
 }
 
 function updateGrenades(dt) {
@@ -1040,15 +1381,14 @@ function updateGrenades(dt) {
   STATE.grenades = STATE.grenades.filter(g => g.alive);
 }
 
-function explodeGrenade(g) {
-  g.alive = false;
-  scene.remove(g.mesh);
+// 通用爆炸：手雷 / 火箭弹共用
+function explodeAt(pos, radius, maxDamage, playerFactor) {
   playExplosion();
   const explosion = new THREE.Mesh(
     new THREE.SphereGeometry(0.5, 12, 12),
     new THREE.MeshBasicMaterial({ color: 0xffaa33, transparent: true, opacity: 0.9 })
   );
-  explosion.position.copy(g.pos);
+  explosion.position.copy(pos);
   scene.add(explosion);
   let scale = 0.5;
   const expand = setInterval(() => {
@@ -1058,34 +1398,66 @@ function explodeGrenade(g) {
     if (scale > 8) { clearInterval(expand); scene.remove(explosion); }
   }, 16);
 
-  const radius = 6;
-  const maxDamage = 100;
   for (const enemy of STATE.enemies) {
     if (!enemy.alive) continue;
-    const dist = g.pos.distanceTo(enemy.mesh.position.clone().setY(g.pos.y));
+    const dist = pos.distanceTo(enemy.mesh.position.clone().setY(pos.y));
     if (dist < radius) {
-      enemy.hp -= maxDamage * (1 - dist / radius);
-      if (enemy.hp <= 0) killEnemy(enemy);
+      damageEnemy(enemy, maxDamage * (1 - dist / radius));
     }
   }
-  const playerDist = g.pos.distanceTo(player.pos);
+  const playerDist = pos.distanceTo(player.pos);
   if (playerDist < radius) {
-    damagePlayer(maxDamage * 0.4 * (1 - playerDist / radius));
+    damagePlayer(maxDamage * playerFactor * (1 - playerDist / radius));
   }
+}
+
+function explodeGrenade(g) {
+  g.alive = false;
+  scene.remove(g.mesh);
+  explodeAt(g.pos, 6, 100, 0.4);
+}
+
+// ---------- 火箭弹 ----------
+function updateRockets(dt) {
+  for (const r of STATE.rockets) {
+    if (!r.alive) continue;
+    const step = r.dir.clone().multiplyScalar(r.speed * dt);
+    const next = r.mesh.position.clone().add(step);
+    r.life -= dt;
+    let boom = false;
+    if (next.y < 0.15) boom = true;
+    else if (collidesAt(next.x, next.z, 0.15)) boom = true;
+    for (const enemy of STATE.enemies) {
+      if (!enemy.alive) continue;
+      const chest = enemyChest(enemy);
+      if (next.distanceTo(chest) < 0.9) { boom = true; break; }
+    }
+    r.mesh.position.copy(next);
+    if (boom || r.life <= 0) {
+      r.alive = false;
+      scene.remove(r.mesh);
+      explodeAt(next.clone(), r.radius, r.damage, 0.35);
+    }
+  }
+  STATE.rockets = STATE.rockets.filter(r => r.alive);
 }
 
 // ---------- 道具 / 弹药补给 ----------
 const PICKUP_TYPES = {
-  health:      { color: 0x33ff66, labelKey: 'pHealth',      weight: 18 },
-  speed:       { color: 0xffcc33, labelKey: 'pSpeed',       weight: 10 },
-  shield:      { color: 0x33aaff, labelKey: 'pShield',      weight: 12 },
-  ammo_rifle:  { color: 0xff8a3d, labelKey: 'pAmmoRifle',   weight: 18, ammoFor: 'rifle',   amount: 60 },
-  ammo_pistol: { color: 0xffd34d, labelKey: 'pAmmoPistol',  weight: 14, ammoFor: 'pistol',  amount: 36 },
-  ammo_shotgun:{ color: 0x9be15d, labelKey: 'pAmmoShotgun', weight: 14, ammoFor: 'shotgun', amount: 18 },
-  ammo_sniper: { color: 0x7db4ff, labelKey: 'pAmmoSniper',  weight: 14, ammoFor: 'sniper',  amount: 10 },
+  health:      { color: 0x33ff66, labelKey: 'pHealth',      weight: 16 },
+  speed:       { color: 0xffcc33, labelKey: 'pSpeed',       weight: 9 },
+  shield:      { color: 0x33aaff, labelKey: 'pShield',      weight: 11 },
+  grenade:     { color: 0xff77aa, labelKey: 'pGrenade',     weight: 11, grenade: true },
+  ammo_rifle:  { color: 0xff8a3d, labelKey: 'pAmmoRifle',   weight: 16, ammoFor: 'rifle',   amount: 60 },
+  ammo_pistol: { color: 0xffd34d, labelKey: 'pAmmoPistol',  weight: 12, ammoFor: 'pistol',  amount: 36 },
+  ammo_shotgun:{ color: 0x9be15d, labelKey: 'pAmmoShotgun', weight: 11, ammoFor: 'shotgun', amount: 18 },
+  ammo_sniper: { color: 0x7db4ff, labelKey: 'pAmmoSniper',  weight: 10, ammoFor: 'sniper',  amount: 10 },
+  ammo_smg:    { color: 0x5ad1ff, labelKey: 'pAmmoSmg',     weight: 12, ammoFor: 'smg',     amount: 60 },
+  ammo_dmr:    { color: 0x9d7bff, labelKey: 'pAmmoDmr',     weight: 10, ammoFor: 'dmr',     amount: 30 },
+  ammo_rpg:    { color: 0xff5f6d, labelKey: 'pAmmoRpg',     weight: 6,  ammoFor: 'rpg',     amount: 2 },
 };
-const PICKUP_LIMIT = 8;
-const AMMO_PICKUPS = ['ammo_rifle', 'ammo_pistol', 'ammo_shotgun', 'ammo_sniper'];
+const PICKUP_LIMIT = 9;
+const AMMO_PICKUPS = ['ammo_rifle', 'ammo_pistol', 'ammo_shotgun', 'ammo_sniper', 'ammo_smg', 'ammo_dmr', 'ammo_rpg'];
 
 function pickPickupType() {
   const keys = Object.keys(PICKUP_TYPES);
@@ -1138,6 +1510,19 @@ function buildPickupMesh(type) {
     );
     cross.position.y = 0.6;
     body.add(cross);
+  } else if (type === 'grenade') {
+    body = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 12, 10),
+      new THREE.MeshStandardMaterial({ color: info.color, emissive: info.color, emissiveIntensity: 0.6, roughness: 0.35 })
+    );
+    body.position.y = 0.65;
+    const band = new THREE.Mesh(
+      new THREE.TorusGeometry(0.24, 0.045, 8, 18),
+      new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.6 })
+    );
+    band.position.y = 0.65;
+    band.rotation.x = Math.PI / 2;
+    body.add(band);
   } else if (type === 'speed') {
     body = new THREE.Mesh(
       new THREE.ConeGeometry(0.3, 0.7, 6),
@@ -1182,7 +1567,7 @@ function spawnPickup(type) {
 function dropAmmoNearPlayer(count, preferCurrent) {
   for (let i = 0; i < count; i++) {
     let type;
-    if (preferCurrent && i === 0) type = 'ammo_' + STATE.currentWeapon;
+    if (preferCurrent && i === 0 && STATE.currentWeapon !== 'melee') type = 'ammo_' + STATE.currentWeapon;
     else type = AMMO_PICKUPS[Math.floor(Math.random() * AMMO_PICKUPS.length)];
     let x, z, tries = 0;
     do {
@@ -1230,6 +1615,8 @@ function applyPickup(type) {
   } else if (type === 'shield') {
     STATE.shield = STATE.maxShield;
     STATE.buffs.shield = 10;
+  } else if (type === 'grenade') {
+    STATE.grenadeCount++;
   }
   updateHUD();
   updateBuffs();
@@ -1259,6 +1646,40 @@ const enemyGeoHead = new THREE.SphereGeometry(0.35, 12, 12);
 const enemyMatBody = new THREE.MeshStandardMaterial({ color: 0xcc3333, roughness: 0.5, metalness: 0.3, emissive: 0x000000 });
 const enemyMatHead = new THREE.MeshStandardMaterial({ color: 0xff5555, roughness: 0.4, emissive: 0x000000 });
 const enemyEyeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+// ---------- 敌人头顶血条 ----------
+function createEnemyBar() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128; canvas.height = 24;
+  const ctx = canvas.getContext('2d');
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sprite.scale.set(1.25, 0.23, 1);
+  sprite.raycast = function () {}; // 血条不参与命中判定
+  sprite.userData.isEnemyBar = true;
+  return { canvas: canvas, ctx: ctx, tex: tex, sprite: sprite };
+}
+
+function updateEnemyBar(enemy) {
+  if (!enemy.bar) return;
+  const c = enemy.bar.ctx;
+  c.clearRect(0, 0, 128, 24);
+  c.fillStyle = 'rgba(0,0,0,0.78)';
+  c.fillRect(4, 6, 120, 12);
+  const ratio = Math.max(0, Math.min(1, enemy.hp / (enemy.maxHp || 100)));
+  const col = ratio > 0.6 ? '#4fd08a' : ratio > 0.3 ? '#ffcc33' : '#ff4d4d';
+  c.fillStyle = col;
+  c.fillRect(6, 8, Math.max(0, 116 * ratio), 8);
+  c.strokeStyle = 'rgba(255,255,255,0.55)';
+  c.lineWidth = 1;
+  c.strokeRect(4.5, 6.5, 119, 11);
+  c.fillStyle = '#fff';
+  c.font = 'bold 10px sans-serif';
+  c.textAlign = 'center';
+  c.fillText(String(Math.max(0, Math.ceil(enemy.hp))), 64, 17);
+  enemy.bar.tex.needsUpdate = true;
+}
 
 function spawnEnemy() {
   // 波次越高，远程敌人占比越大（部分敌人会主动开火）
@@ -1301,7 +1722,7 @@ function spawnEnemy() {
   group.position.set(x, 0, z);
   scene.add(group);
   const enemy = {
-    mesh: group, hp: ranged ? 80 : 100, alive: true,
+    mesh: group, hp: ranged ? 80 : 100, maxHp: ranged ? 80 : 100, alive: true,
     speed: 2.5 + Math.random() * 1.5 + STATE.wave * 0.2,
     damage: 8 + STATE.wave, attackCooldown: 0, attackRange: 2.2,
     ranged: ranged, core: core,
@@ -1311,22 +1732,41 @@ function spawnEnemy() {
     projectileSpeed: 12 + Math.min(7, STATE.wave * 1.2),
     keepMin: 6.5, keepMax: 18,
     hand: Math.random() < 0.5 ? 1 : -1,
+    dodgeUntil: 0, dodgeDir: Math.random() < 0.5 ? 1 : -1,
+    nextDodge: 0, losTimer: 0, hasLos: true,
+    bar: null,
   };
+  // 头顶血条
+  enemy.bar = createEnemyBar();
+  enemy.bar.sprite.position.set(0, 2.85, 0);
+  group.add(enemy.bar.sprite);
+  updateEnemyBar(enemy);
   group.userData.enemyRef = enemy;
   STATE.enemies.push(enemy);
 }
 
 function killEnemy(enemy) {
+  if (!enemy.alive) return;
   enemy.alive = false;
   STATE.score++;
+  STATE.points += enemy.ranged ? 8 : 5;
   playEnemyDie();
-  // 击杀有概率掉落弹药箱，鼓励主动清怪补给
+  // 击杀有概率掉落弹药箱 / 手雷
   const dropChance = enemy.ranged ? 0.45 : 0.28;
-  if (Math.random() < dropChance && STATE.pickups.length < PICKUP_LIMIT) {
-    const type = Math.random() < 0.55 ? 'ammo_' + STATE.currentWeapon : AMMO_PICKUPS[Math.floor(Math.random() * AMMO_PICKUPS.length)];
+  if (STATE.pickups.length < PICKUP_LIMIT) {
     const x = Math.max(-46, Math.min(46, enemy.mesh.position.x));
     const z = Math.max(-46, Math.min(46, enemy.mesh.position.z));
-    if (!collidesAt(x, z, 0.6)) placePickup(type, x, z);
+    if (!collidesAt(x, z, 0.6)) {
+      if (Math.random() < dropChance) {
+        const cw = STATE.currentWeapon;
+        const type = (cw !== 'melee' && Math.random() < 0.55)
+          ? 'ammo_' + cw
+          : AMMO_PICKUPS[Math.floor(Math.random() * AMMO_PICKUPS.length)];
+        placePickup(type, x, z);
+      } else if (Math.random() < 0.25) {
+        placePickup('grenade', x, z);
+      }
+    }
   }
   const mesh = enemy.mesh;
   let rot = 0;
@@ -1343,6 +1783,29 @@ function killEnemy(enemy) {
   checkWaveComplete();
 }
 
+function moveEnemy(enemy, mx, mz, dt) {
+  const mesh = enemy.mesh;
+  const nx = mesh.position.x + mx * dt;
+  const nz = mesh.position.z + mz * dt;
+  if (!collidesAt(nx, mesh.position.z, 0.5)) mesh.position.x = nx;
+  if (!collidesAt(mesh.position.x, nz, 0.5)) mesh.position.z = nz;
+}
+
+// 玩家开火 → 附近敌人触发一次短促闪避
+function notifyPlayerShot() {
+  if (!STATE.playing) return;
+  const now = performance.now();
+  for (const enemy of STATE.enemies) {
+    if (!enemy.alive) continue;
+    const d = enemy.mesh.position.distanceTo(player.pos);
+    if (d > 20) continue;
+    if (now < enemy.nextDodge) continue;
+    enemy.nextDodge = now + 800 + Math.random() * 500;
+    enemy.dodgeUntil = now + 320;
+    enemy.dodgeDir = Math.random() < 0.5 ? 1 : -1;
+  }
+}
+
 function updateEnemies(dt) {
   const now = performance.now();
   for (const enemy of STATE.enemies) {
@@ -1351,30 +1814,40 @@ function updateEnemies(dt) {
     const dx = player.pos.x - mesh.position.x;
     const dz = player.pos.z - mesh.position.z;
     const dist = Math.hypot(dx, dz);
+    const nx = dx / (dist || 1), nz = dz / (dist || 1);
+    const sx = -nz, sz = nx;
+    const dodging = now < enemy.dodgeUntil;
     mesh.rotation.y = Math.atan2(dx, dz);
     if (enemy.core) enemy.core.scale.setScalar(1 + Math.sin(now * 0.008 + mesh.position.x) * 0.2);
 
     if (enemy.ranged) {
-      // 远程单位：维持中距离，伺机开火
-      let moveDir = 0;
-      if (dist > enemy.keepMax) moveDir = 1;
-      else if (dist < enemy.keepMin) moveDir = -1;
-      if (moveDir !== 0 && dist > 0.001) {
-        const nx = dx / dist, nz = dz / dist;
-        const newX = mesh.position.x + nx * enemy.speed * 0.8 * moveDir * dt;
-        const newZ = mesh.position.z + nz * enemy.speed * 0.8 * moveDir * dt;
-        if (!collidesAt(newX, mesh.position.z, 0.5)) mesh.position.x = newX;
-        if (!collidesAt(mesh.position.x, newZ, 0.5)) mesh.position.z = newZ;
-      } else {
-        // 横向绕行，避免站桩
-        const sx = -dz / (dist || 1), sz = dx / (dist || 1);
-        const newX = mesh.position.x + sx * enemy.speed * 0.35 * dt * (enemy.hand || 1);
-        const newZ = mesh.position.z + sz * enemy.speed * 0.35 * dt * (enemy.hand || 1);
-        if (!collidesAt(newX, mesh.position.z, 0.5)) mesh.position.x = newX;
-        if (!collidesAt(mesh.position.x, newZ, 0.5)) mesh.position.z = newZ;
+      // 远程单位：每 0.3s 检查一次能否射到玩家
+      enemy.losTimer -= dt;
+      if (enemy.losTimer <= 0) {
+        enemy.losTimer = 0.3;
+        enemy.hasLos = !losBlocked(enemyChest(enemy), player.pos.clone().setY(player.pos.y - 0.5));
       }
+
+      if (dodging) {
+        // 侧向闪避
+        moveEnemy(enemy, sx * enemy.speed * 1.9 * enemy.dodgeDir, sz * enemy.speed * 1.9 * enemy.dodgeDir, dt);
+      } else if (!enemy.hasLos) {
+        // 射不到玩家 → 主动挪到有射界的位置（靠近 + 侧移绕开障碍）
+        moveEnemy(enemy,
+          (nx * 1.05 + sx * 0.6 * enemy.hand) * enemy.speed,
+          (nz * 1.05 + sz * 0.6 * enemy.hand) * enemy.speed, dt);
+      } else if (dist > enemy.keepMax) {
+        moveEnemy(enemy, nx * enemy.speed * 0.9, nz * enemy.speed * 0.9, dt);
+      } else if (dist < enemy.keepMin) {
+        // 玩家逼近 → 后撤躲开
+        moveEnemy(enemy, -nx * enemy.speed * 1.1, -nz * enemy.speed * 1.1, dt);
+      } else {
+        // 有射界时小幅横移，别站桩
+        moveEnemy(enemy, sx * enemy.speed * 0.35 * enemy.hand, sz * enemy.speed * 0.35 * enemy.hand, dt);
+      }
+
       enemy.fireCooldown -= dt;
-      if (enemy.fireCooldown <= 0 && dist < 32) {
+      if (enemy.fireCooldown <= 0 && dist < 32 && enemy.hasLos) {
         enemy.fireCooldown = enemy.fireInterval * (0.85 + Math.random() * 0.3);
         fireEnemyProjectile(enemy);
       }
@@ -1383,18 +1856,21 @@ function updateEnemies(dt) {
         if (enemy.attackCooldown <= 0) { enemy.attackCooldown = 1.2; damagePlayer(enemy.damage * 0.7); }
       }
       mesh.position.y = Math.sin(now * 0.004 + mesh.position.x) * 0.06;
-    } else if (dist > enemy.attackRange) {
-      const nx = dx / dist, nz = dz / dist;
-      const newX = mesh.position.x + nx * enemy.speed * dt;
-      const newZ = mesh.position.z + nz * enemy.speed * dt;
-      if (!collidesAt(newX, mesh.position.z, 0.5)) mesh.position.x = newX;
-      if (!collidesAt(mesh.position.x, newZ, 0.5)) mesh.position.z = newZ;
-      mesh.position.y = Math.sin(performance.now() * 0.005 + mesh.position.x) * 0.1;
     } else {
-      enemy.attackCooldown -= dt;
-      if (enemy.attackCooldown <= 0) {
-        enemy.attackCooldown = 1.0;
-        damagePlayer(enemy.damage);
+      // 近战单位
+      if (dodging) {
+        moveEnemy(enemy, sx * enemy.speed * 2.1 * enemy.dodgeDir, sz * enemy.speed * 2.1 * enemy.dodgeDir, dt);
+      } else if (dist > enemy.attackRange) {
+        // 追击时带一点蛇形走位，避免直线吃枪
+        const weave = Math.sin(now * 0.003 + mesh.position.x * 2) * 0.55;
+        moveEnemy(enemy, (nx + sx * weave) * enemy.speed, (nz + sz * weave) * enemy.speed, dt);
+        mesh.position.y = Math.sin(now * 0.005 + mesh.position.x) * 0.1;
+      } else {
+        enemy.attackCooldown -= dt;
+        if (enemy.attackCooldown <= 0) {
+          enemy.attackCooldown = 1.0;
+          damagePlayer(enemy.damage);
+        }
       }
     }
   }
@@ -1450,6 +1926,107 @@ function updateEnemyBullets(dt) {
   });
 }
 
+// ---------- 队友 ----------
+const allyBodyMat = new THREE.MeshStandardMaterial({ color: 0x2f7fd0, roughness: 0.6, metalness: 0.3 });
+const allyAccentMat = new THREE.MeshStandardMaterial({ color: 0x9fe8ff, emissive: 0x2a6f99, emissiveIntensity: 0.6 });
+
+function spawnAlly() {
+  const group = new THREE.Group();
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 0.95, 8), allyBodyMat);
+  torso.position.y = 1.15;
+  torso.castShadow = true;
+  group.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), allyBodyMat);
+  head.position.y = 1.85;
+  head.castShadow = true;
+  group.add(head);
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.09, 0.12), allyAccentMat);
+  visor.position.set(0, 1.87, 0.22);
+  group.add(visor);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.75), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+  gun.position.set(0.32, 1.1, 0.32);
+  group.add(gun);
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.22), allyBodyMat);
+  legL.position.set(-0.16, 0.35, 0);
+  group.add(legL);
+  const legR = legL.clone();
+  legR.position.x = 0.16;
+  group.add(legR);
+
+  group.position.set(
+    Math.max(-46, Math.min(46, player.pos.x + (Math.random() - 0.5) * 4)),
+    0,
+    Math.max(-46, Math.min(46, player.pos.z + (Math.random() - 0.5) * 4))
+  );
+  scene.add(group);
+  STATE.allies.push({ mesh: group, cooldown: 0.6, alive: true });
+}
+
+function summonAlly() {
+  if (!STATE.playing) return;
+  if (STATE.allies.length >= 3) { showToast(t('allyMax')); return; }
+  if (STATE.points < 10) { showToast(t('allyNoPoints')); return; }
+  STATE.points -= 10;
+  spawnAlly();
+  showToast(t('allySummoned'));
+  updateHUD();
+}
+
+function allyTracer(from, to) {
+  const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.9 }));
+  scene.add(line);
+  setTimeout(() => scene.remove(line), 90);
+}
+
+function updateAllies(dt) {
+  const now = performance.now();
+  for (const ally of STATE.allies) {
+    if (!ally.alive) continue;
+    const mesh = ally.mesh;
+    // 找最近的活敌人
+    let target = null, best = Infinity;
+    for (const enemy of STATE.enemies) {
+      if (!enemy.alive) continue;
+      const d = mesh.position.distanceTo(enemy.mesh.position);
+      if (d < 45 && d < best) { best = d; target = enemy; }
+    }
+
+    if (!target) {
+      // 无敌人：跟随玩家
+      const d = Math.hypot(player.pos.x - mesh.position.x, player.pos.z - mesh.position.z);
+      if (d > 3.5) {
+        const nx = (player.pos.x - mesh.position.x) / d;
+        const nz = (player.pos.z - mesh.position.z) / d;
+        moveEnemy(ally, nx * 2.6, nz * 2.6, dt);
+        mesh.rotation.y = Math.atan2(nx, nz);
+      }
+      continue;
+    }
+
+    const dx = target.mesh.position.x - mesh.position.x;
+    const dz = target.mesh.position.z - mesh.position.z;
+    const dist = Math.hypot(dx, dz) || 1;
+    const nx = dx / dist, nz = dz / dist;
+    if (dist > 10) moveEnemy(ally, nx * 2.6, nz * 2.6, dt);
+    else if (dist < 6.5) moveEnemy(ally, -nx * 2.4, -nz * 2.4, dt);
+    mesh.rotation.y = Math.atan2(dx, dz);
+
+    ally.cooldown -= dt;
+    if (ally.cooldown <= 0 && dist < 32) {
+      const from = new THREE.Vector3(mesh.position.x, 1.2, mesh.position.z);
+      const to = enemyChest(target);
+      if (!losBlocked(from, to)) {
+        ally.cooldown = 0.5 + Math.random() * 0.15;
+        allyTracer(from, to);
+        damageEnemy(target, 16);
+      } else {
+        ally.cooldown = 0.2;
+      }
+    }
+  }
+}
+
 // ---------- 玩家受伤 ----------
 function damagePlayer(amount) {
   if (STATE.shield > 0) {
@@ -1465,7 +2042,7 @@ function damagePlayer(amount) {
   setTimeout(() => { overlay.style.boxShadow = 'inset 0 0 120px rgba(255,0,0,0)'; }, 300);
   updateHUD();
   updateBuffs();
-  if (STATE.health <= 0) { STATE.health = 0; gameOver(); }
+  if (STATE.health <= 0) { STATE.health = 0; updateHUD(); gameOver(); }
 }
 
 // ---------- 波次 ----------
@@ -1555,15 +2132,27 @@ function updateHUD() {
     shieldWrap.style.display = 'none';
   }
   const a = STATE.ammo[STATE.currentWeapon];
+  const wdef = WEAPONS[STATE.currentWeapon];
   const curEl = document.getElementById('ammo-current');
   const resEl = document.getElementById('ammo-reserve');
-  curEl.textContent = a.mag;
-  resEl.textContent = a.reserve;
-  const low = a.mag === 0 && a.reserve === 0;
-  curEl.style.color = low ? '#ff4444' : '';
-  resEl.style.color = low ? '#ff4444' : (a.reserve === 0 ? '#ffaa44' : '');
+  if (wdef && wdef.melee) {
+    curEl.textContent = '∞';
+    resEl.textContent = '';
+    curEl.style.color = '#9fe8ff';
+  } else {
+    curEl.textContent = a.mag;
+    resEl.textContent = a.reserve;
+    const low = a.mag === 0 && a.reserve === 0;
+    curEl.style.color = low ? '#ff4444' : '';
+    resEl.style.color = low ? '#ff4444' : (a.reserve === 0 ? '#ffaa44' : '');
+  }
   document.getElementById('score-text').textContent = STATE.score;
   document.getElementById('wave-text').textContent = STATE.wave;
+  const pointsEl = document.getElementById('points-text');
+  if (pointsEl) pointsEl.textContent = STATE.points;
+  const nadeEl = document.getElementById('grenade-count');
+  if (nadeEl) nadeEl.textContent = STATE.grenadeCount;
+  refreshWeaponSlots();
 }
 
 // ---------- 游戏循环 ----------
@@ -1630,7 +2219,10 @@ function animate() {
 
     updateEnemies(dt);
     updateEnemyBullets(dt);
+    updateAllies(dt);
+    updateRockets(dt);
     updateGrenades(dt);
+    updateGrenadePathPreview();
     updatePickups(dt);
     updateMinimap();
 
@@ -1647,16 +2239,26 @@ function startGame() {
   STATE.playing = true;
   STATE.health = 100; STATE.shield = 0;
   STATE.ammo = {
-    rifle:   { mag: 30, reserve: 30 },
-    pistol:  { mag: 12, reserve: 0 },
-    shotgun: { mag: 6,  reserve: 0 },
-    sniper:  { mag: 5,  reserve: 0 },
+    rifle:   { mag: 0, reserve: 0 },
+    pistol:  { mag: 12, reserve: 24 },
+    shotgun: { mag: 0, reserve: 0 },
+    sniper:  { mag: 0, reserve: 0 },
+    smg:     { mag: 0, reserve: 0 },
+    dmr:     { mag: 0, reserve: 0 },
+    rpg:     { mag: 0, reserve: 0 },
+    melee:   { mag: 0, reserve: 0 },
   };
-  STATE.currentWeapon = 'rifle';
+  STATE.currentWeapon = 'pistol';
+  STATE.owned = ['pistol', 'melee'];
+  STATE.points = 40;
+  STATE.grenadeCount = 0;
   STATE.score = 0; STATE.wave = 1;
   STATE.shotsFired = 0; STATE.shotsHit = 0;
-  STATE.reloading = false; STATE.aiming = false;
+  STATE.reloading = false; STATE.aiming = false; STATE.grenadeAiming = false;
   STATE.buffs = { speed: 0, shield: 0 };
+  hideGrenadePath();
+  STATE.allies.forEach(a => scene.remove(a.mesh)); STATE.allies = [];
+  STATE.rockets.forEach(r => scene.remove(r.mesh)); STATE.rockets = [];
   STATE.grenades.forEach(g => scene.remove(g.mesh)); STATE.grenades = [];
   STATE.bullets.forEach(b => scene.remove(b.mesh)); STATE.bullets = [];
   STATE.pickups.forEach(p => scene.remove(p.mesh)); STATE.pickups = [];
@@ -1666,9 +2268,9 @@ function startGame() {
   touchState.moveX = 0; touchState.moveY = 0; touchState.firing = false;
   if (joyStick) joyStick.style.transform = 'translate(0px, 0px)';
   document.body.classList.remove('ads', 'sniper');
-  document.getElementById('weapon-view').innerHTML = WEAPON_SVGS.rifle;
-  document.getElementById('weapon-name').textContent = tName('rifle');
-  document.querySelectorAll('.weapon-slot').forEach(el => el.classList.toggle('active', el.dataset.w === 'rifle'));
+  document.getElementById('weapon-view').innerHTML = WEAPON_SVGS.pistol;
+  document.getElementById('weapon-name').textContent = tName('pistol');
+  refreshWeaponSlots();
   document.getElementById('reload-indicator').style.display = 'none';
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('game-over').style.display = 'none';
@@ -1682,12 +2284,18 @@ function startGame() {
     spawnWave();
     spawnPickup();
     spawnPickup();
-    dropAmmoNearPlayer(2, true);
+    spawnPickup('grenade');
+    // 开局在玩家附近放一枚手雷，仍需走过去拾取
+    const gx = player.pos.x + 3, gz = player.pos.z - 2;
+    if (!collidesAt(gx, gz, 0.6)) placePickup('grenade', gx, gz);
+    dropAmmoNearPlayer(3, true);
   }, 1000);
 }
 
 function gameOver() {
   STATE.playing = false;
+  STATE.grenadeAiming = false;
+  hideGrenadePath();
   releaseLock();
   touchState.firing = false;
   touchState.moveX = 0; touchState.moveY = 0;
@@ -1718,7 +2326,7 @@ window.addEventListener('orientationchange', () => {
   }, 120);
 });
 
-document.getElementById('weapon-view').innerHTML = WEAPON_SVGS.rifle;
+document.getElementById('weapon-view').innerHTML = WEAPON_SVGS.pistol;
 applyLang();
 animate();
 </script>
